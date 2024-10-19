@@ -1,6 +1,6 @@
 # NERP - Nostr Epoxy Reverse Proxy
 ![NERP](https://cdn.satellite.earth/f6a77e9382905f48ceadf2cb3062242dca1ff7ba2583d9caa4d299d1ece53ac8.webp)
-Are operating a relay NERP yet? Use this Nostr Epoxy Reverse Proxy to allow clients to proxy through your relay and earn sats.
+Are operating a relay NERP yet? Use this **Nostr Epoxy Reverse Proxy** to allow clients to proxy through your relay and earn sats.
 
 ## Why use this?
 
