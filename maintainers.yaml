@@ -1,0 +1,11 @@
+identifier: nostr-epoxy-reverse-proxy
+maintainers:
+- npub1hw6amg8p24ne08c9gdq8hhpqx0t0pwanpae9z25crn7m9uy7yarse465gr
+relays:
+- wss://relay.damus.io/
+- wss://nos.lol/
+- wss://nostr.wine/
+- wss://relay.nostrplebs.com/
+- wss://relay.fountain.fm/
+- wss://relay.stens.dev/
+- wss://relay.primal.net/

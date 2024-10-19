@@ -1,13 +1,5 @@
-import {
-  nip19,
-} from "nostr-tools";
-import { RawData, WebSocket } from "ws";
+import { WebSocket } from "ws";
 import "jsr:@std/dotenv/load";
-import { hexToBytes } from "@noble/hashes/utils";
-
-// bind/unbind
-// middleware for defaultRelay
-
 
 const relayUrl = Deno.env.get("RELAY_URL")
 
