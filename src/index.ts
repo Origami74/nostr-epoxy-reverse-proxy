@@ -5,7 +5,7 @@ import { NSecSigner } from "@nostrify/nostrify";
 import { publishEvent } from "./eventPublisher.ts";
 
 const relayPrivateKey = Deno.env.get("RELAY_PRIVATEKEY");
-const relayUrl = Deno.env.get("RELAY_URL");
+const relayUrl = Deno.env.get("UPSTREAM");
 const profitsPubkey = Deno.env.get("PROFITS_PUBKEY");
 const profitsPayoutThreshold = Deno.env.get("PROFIT_PAYOUT_THRESHOLD");
 const profitPubkeyLockEnabled = Deno.env.get("PROFITS_PUBKEY_LOCK") === "true";

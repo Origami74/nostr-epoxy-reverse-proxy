@@ -1,0 +1,19 @@
+version: "3"
+
+volumes:
+  relay: {}
+
+services:
+  relay:
+    image: scsibug/nostr-rs-relay:0.8.13
+    volumes:
+      - relay:/usr/src/app/db
+
+  proxy:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      UPSTREAM: ws://relay:8080
+    depends_on:
+      - relay
