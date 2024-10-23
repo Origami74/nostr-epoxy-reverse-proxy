@@ -16,6 +16,7 @@
     "debug": "^4.3.7",
     "pac-proxy-agent": "^7.0.2",
     "proxy-agent": "^6.4.0",
+    "reflect-metadata": "^0.2.2",
     "tsyringe": "^4.8.0",
     "ws": "^8.18.0"
   },

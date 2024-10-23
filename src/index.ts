@@ -1,9 +1,7 @@
+import 'reflect-metadata';
 import { startup } from "./startup.ts";
 import "jsr:@std/dotenv/load";
 import { WebSocket as ProxyWebSocket } from "ws";
-import { CashuMint, CashuWallet, Proof, getEncodedToken } from "@cashu/cashu-ts";
-import { NSecSigner } from "@nostrify/nostrify";
-import { publishEvent } from "./eventPublisher.ts";
 
 const relayPrivateKey = Deno.env.get("RELAY_PRIVATEKEY");
 const relayUrl = Deno.env.get("UPSTREAM");

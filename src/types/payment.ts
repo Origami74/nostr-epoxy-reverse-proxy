@@ -1,6 +1,6 @@
 import { Proof } from "@cashu/cashu-ts";
 
-type Payment = {
+export type Payment = {
   proofs: Proof[];
   mint: string;
 };

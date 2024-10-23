@@ -1,9 +1,11 @@
 import { injectable, inject } from "tsyringe";
 import { Proof } from "@cashu/cashu-ts";
-import { IWallet } from "./wallet.ts";
-import { Payment } from "./types/payment.ts";
+import type { IWallet } from "./wallet.ts";
+import { Wallet } from "./wallet.ts";
+import { EventPublisher } from "../eventPublisher.ts";
 import type { IEventPublisher } from "../eventPublisher.ts";
 import logger from "../logger.ts";
+import { Payment } from "../types/payment.ts";
 
 export interface ICashRegister {
   collectPayment(payment: Payment): Promise<boolean>;

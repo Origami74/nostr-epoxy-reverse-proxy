@@ -1,5 +1,5 @@
 import { injectable } from "tsyringe";
-import { CashuMint, CashuWallet, Proof, getEncodedToken, receiveTokenEntry } from "@cashu/cashu-ts";
+import { CashuMint, CashuWallet, Proof, getEncodedToken,  } from "@cashu/cashu-ts";
 
 export interface IWallet {
   add(proofs: Proof[]): Promise<number>;
@@ -22,7 +22,7 @@ export class Wallet implements IWallet {
    * Returns total amount in wallet
    */
   public async add(proofs: Proof[]): Promise<number> {
-    const redeemedProofs = await receiveTokenEntry(proofs, { privkey: this.relayPrivateKey });
+    const redeemedProofs = await this.cashuWallet.receiveTokenEntry({proofs: proofs, mint: this.mintUrl}, {  privkey: this.relayPrivateKey });
 
     this.nutSack = this.nutSack.concat(redeemedProofs);
 

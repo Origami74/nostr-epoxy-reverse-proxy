@@ -1,4 +1,4 @@
-type ProductListing = {
+export type ProductListing = {
   name: "KiB" | "MiB" | "GiB";
   price: number;
   pubkey: string;

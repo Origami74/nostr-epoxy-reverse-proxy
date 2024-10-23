@@ -2,7 +2,7 @@ import { inject, injectable } from "tsyringe";
 import logger from "./logger.ts";
 import { NRelay1, NPool } from "@nostrify/nostrify";
 
-export default interface IRelayProvider {
+export interface IRelayProvider {
   getDefaultPool(): NPool<NRelay1>;
 }
 

@@ -1,7 +1,8 @@
 import { container, inject, injectable } from "tsyringe";
 import logger from "./logger.ts";
 import { unixNow } from "./helpers/date.ts";
-import type IRelayProvider from "./relayProvider.ts";
+import { RelayProvider } from "./relayProvider.ts";
+import type { IRelayProvider } from "./relayProvider.ts";
 import { NRelay, NSecSigner } from "@nostrify/nostrify";
 
 export interface IEventPublisher {
@@ -23,19 +24,19 @@ export class EventPublisher implements IEventPublisher {
     this.relay = relayProvider.getDefaultPool();
 
     this.privateKey = Deno.env.get("PRIVATE_KEY");
-    this.signer = new NSecSigner(privateKey);
-    this.signerPubkey = await signer.getPublicKey();
+    this.signer = new NSecSigner(this.privateKey);
+    this.signerPubkey = this.signer.getPublicKey();
   }
 
   public async publish(kind: number, tags: string[][], content: string): Promise<void> {
     var note = {
       kind: kind,
-      pubkey: this.signerPubkey
+      pubkey: this.signerPubkey,
       content: content,
       created_at: unixNow(),
       tags: tags,
     };
-    const envt = await signer.signEvent(note);
+    const envt = await this.signer.signEvent(note);
 
     await this.relay.event(envt);
   }
