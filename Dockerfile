@@ -4,6 +4,7 @@ FROM denoland/deno:latest
 WORKDIR /app
 COPY . .
 
+RUN deno install
 RUN deno cache src/index.ts
 
 EXPOSE 8000
