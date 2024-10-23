@@ -1,14 +1,13 @@
-NIP-XX
-======
+# NIP-XX
 
-Relay proxying (epoxy)
------------------------
+## Relay proxying (epoxy)
 
 `draft` `optional`
 
 This nip describes a method by which relays can proxy a websocket to another relay based on either pubkey or url.
 
 ## Request definition
+
 ```json
 ["PROXY", "wss://relay.example.xyz"]
 
@@ -17,14 +16,15 @@ This nip describes a method by which relays can proxy a websocket to another rel
 ```
 
 The arguments are the `PROXY` keyword first and second can be:
+
 - A relay address
 - A public key in hex format
 
 WARNING:
 If requests are not encrypted to a pubkey of the destination, the proxy server can send the traffic anywhere without the client being aware.
 
-
 ## Relay implementation
+
 ### Broadcast proxy
 
 broadcast replacable event of kind `18909` event announcing the proxy capability to the network:
@@ -41,6 +41,7 @@ tag `fee` for fee per mb.
 tag `unit` for fee unit.
 
 #### Example:
+
 ```json
 {
   "kind": 18909,
@@ -61,17 +62,20 @@ tag `unit` for fee unit.
 }
 ```
 
-
 ### Authorization
+
 - payment
 - signing (nip-42)
-cashu
+  cashu
 
 ## Client implementation
+
 intro
 
 ### Resolving Pubkeys
+
 NIP-66
 
 ### Error handling
+
 todo
