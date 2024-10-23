@@ -3,8 +3,8 @@ import { startup } from "./startup.ts";
 import "jsr:@std/dotenv/load";
 import { WebSocket as ProxyWebSocket } from "ws";
 
-const relayPrivateKey = Deno.env.get("RELAY_PRIVATEKEY");
-const relayUrl = Deno.env.get("UPSTREAM");
+const relayPrivateKey = getRequiredEnv("RELAY_PRIVATEKEY");
+const relayUrl = getRequiredEnv("UPSTREAM");
 
 console.log(`Proxy ${relayUrl}`);
 

@@ -23,7 +23,7 @@ export class EventPublisher implements IEventPublisher {
     this.logger = logger;
     this.relay = relayProvider.getDefaultPool();
 
-    this.privateKey = Deno.env.get("PRIVATE_KEY");
+    this.privateKey = getRequiredEnv("PRIVATE_KEY");
     this.signer = new NSecSigner(this.privateKey);
     this.signerPubkey = this.signer.getPublicKey();
   }

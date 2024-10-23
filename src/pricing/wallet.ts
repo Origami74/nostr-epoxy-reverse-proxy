@@ -1,8 +1,9 @@
 import { injectable } from "tsyringe";
 import { CashuMint, CashuWallet, Proof, getEncodedToken,  } from "@cashu/cashu-ts";
+import { getRequiredEnv } from "../helpers/env.ts";
 
 export interface IWallet {
-  add(proofs: Proof[]): Promise<number>;
+  add(proofs: Proof[], mintUrl: string): Promise<number>;
   takeAll(pubkey?: string): Promise<Proof[]>;
   remove(proofs: Proof[]): number;
   toCashuToken(proofs: Proof[]): string;
@@ -12,8 +13,8 @@ export interface IWallet {
 export class Wallet implements IWallet {
   private nutSack: Proof[] = [];
 
-  private relayPrivateKey: string = Deno.env.get("PRIVATE_KEY");
-  private mintUrl: string = Deno.env.get("MINT_URL");
+  private relayPrivateKey: string = getRequiredEnv("PRIVATE_KEY");
+  private mintUrl: string = getRequiredEnv("MINT_URL");
   private mint = new CashuMint(this.mintUrl);
   private cashuWallet = new CashuWallet(this.mint);
 
@@ -21,8 +22,8 @@ export class Wallet implements IWallet {
    * Redeems tokens and adds them to wallet.
    * Returns total amount in wallet
    */
-  public async add(proofs: Proof[]): Promise<number> {
-    const redeemedProofs = await this.cashuWallet.receiveTokenEntry({proofs: proofs, mint: this.mintUrl}, {  privkey: this.relayPrivateKey });
+  public async add(proofs: Proof[], mintUrl: string): Promise<number> {
+    const redeemedProofs = await this.cashuWallet.receiveTokenEntry({proofs: proofs, mint: mintUrl}, {  privkey: this.relayPrivateKey });
 
     this.nutSack = this.nutSack.concat(redeemedProofs);
 

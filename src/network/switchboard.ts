@@ -1,70 +1,14 @@
 import { inject, injectable } from "tsyringe";
-import { WebSocket as CustomWebSocket } from "ws";
+import {Buffer} from 'node:buffer'
+import { WebSocket as CustomWebSocket, MessageEvent as CustomMessageEvent, ErrorEvent as CustomErrorEvent } from "ws";
 
 import OutboundNetwork from "./proxy.ts";
 import logger from "../logger.ts";
 import { CashRegister, type ICashRegister } from "../pricing/cashRegister.ts";
 
+// upstream relay is optional
 const UPSTREAM = Deno.env.get("UPSTREAM");
 
-const socketCleanup = new Map<WebSocket, () => void>();
-
-function connectSockets(source: WebSocket, dest: CustomWebSocket) {
-  // Disconnect any existing connections before binding new one
-  socketCleanup.get(source)?.();
-
-  const forwardMessageToDest = (event: MessageEvent) => {
-    // Prevent proxy request from being forwarded to destination
-    if (event.data.startsWith('["PROXY')) {
-      return;
-    }
-
-    dest.send(event.data);
-  };
-
-  const forwardMessageToSource = (event: MessageEvent) => {
-    source.send(event.data);
-  };
-
-  const forwardErrorToSource = (err) => {
-    this.log(`Connection error to ${dest.url}`, err);
-    source.send(JSON.stringify(["PROXY", "ERROR", err.message]));
-  };
-
-  const forwardCloseToDest = () => {
-    if (dest.readyState === WebSocket.OPEN) {
-      dest.close();
-    }
-  };
-
-  const forwardCloseToSource = () => {
-    source.close();
-  };
-
-  // Assign forwards
-  source.addEventListener("message", forwardMessageToDest);
-  dest.addEventListener("message", forwardMessageToSource);
-
-  source.addEventListener("close", forwardCloseToDest);
-  dest.addEventListener("close", forwardCloseToSource);
-
-  // TODO: If dest opens, but source is already closed, then close/cleanup dest.
-
-  dest.addEventListener("error", forwardErrorToSource);
-
-  // Save forwards for later cleanup
-  socketCleanup.set(source, () => {
-    source.removeEventListener("message", forwardMessageToDest);
-    dest.removeEventListener("message", forwardMessageToSource);
-
-    source.removeEventListener("close", forwardCloseToDest);
-    dest.removeEventListener("close", forwardCloseToSource);
-
-    dest.removeEventListener("error", forwardErrorToSource);
-
-    dest.close();
-  });
-}
 
 async function handleCustomerMessage(
   customerSocket: WebSocket,
@@ -111,13 +55,19 @@ async function handleCustomerMessage(
   }
 }
 
-export interface ISwitchboard {}
+export interface ISwitchboard {
+  handleConnection(source: WebSocket): void
+}
 
 @injectable()
 export default class Switchboard implements ISwitchboard {
   private log = logger.extend("Switchboard");
   private cashRegister: ICashRegister;
   private network: OutboundNetwork;
+
+  private socketConnection = new Map<WebSocket, CustomWebSocket>()
+
+  private socketCleanup = new Map<WebSocket, () => void>();
 
   constructor(
     @inject(OutboundNetwork.name) network: OutboundNetwork,
@@ -127,59 +77,197 @@ export default class Switchboard implements ISwitchboard {
     this.cashRegister = cashRegister;
   }
 
-  handleConnection(downstream: WebSocket) {
-    let buffer: any[] = [];
-    let upstream: CustomWebSocket | undefined;
+  // connect an incoming socket to the relay (optional)
+  connectSocketToRelay(source: WebSocket, relay?: CustomWebSocket) {
+    // Disconnect any existing connections before binding new one
+    this.socketCleanup.get(source)?.();
+    
+    let buffer: any[] = []
 
-    // handle incoming messages
-    const handleMessage = async (event: MessageEvent) => {
-      try {
-        const message = JSON.parse(event.data) as string[];
-        if (!Array.isArray(message)) throw new Error("Message is not an array");
+    // Source listeners
+    const handleSourceMessage = async (event: MessageEvent) => {
+      if (typeof event.data==='string' && event.data.startsWith('["PROXY')) {
+        // handle "PROXY" message
+        try {
+          const message = JSON.parse(event.data) as string[];
+          if (!Array.isArray(message) || message[0] !== 'PEROXY') throw new Error("Broken proxy message");
+  
+          const targetUrl = message[1]
+          const payment = message[2]
 
-        if (message[0] === "PROXY" && message[1]) {
-          const payment = message[1];
-          const userPaid = await this.cashRegister.collectPayment(payment);
+          // user is paying
+          if(payment){
+            await this.cashRegister.collectPayment(payment);
 
-          if (!userPaid) {
-            downstream.send(JSON.stringify(["PROXY", "PAYMENT_REQUIRED", products]));
-            return;
+            // create upstream socket
+            const upstream = new CustomWebSocket(targetUrl, {agent: this.network.agent});
+            this.connectSocketToUpstream(source, upstream)
           }
-
-          const customerDestSocket = new CustomWebSocket(targetUrl);
-          downstream.send(JSON.stringify(["PROXY", "CONNECTING"]));
-
-          connectSockets(downstream, customerDestSocket);
-
-          customerDestSocket.addEventListener("open", () => {
-            useBuffer = false;
-            downstream.send(JSON.stringify(["PROXY", "CONNECTED"]));
-          });
-        } else if (upstream?.readyState !== WebSocket.OPEN) {
-          // buffer message for upstream
-          buffer.push(event.data);
+          else {
+            // tell user they have to pay
+            source.send(JSON.stringify(["PROXY", 'PAYMENT_REQUIRED', 1000000]))
+          }
+        } catch (error) {
+          if(error instanceof Error) source.send(JSON.stringify(["PROXY", "ERROR", error.message]))
         }
-      } catch (error) {}
+      }
+      else if(relay){
+        // there is a relay, either forward or buffer message
+        if(relay.readyState === WebSocket.CONNECTING){
+          // upstream is connecting, buffer message
+          buffer.push(event.data)
+        }
+        else if(relay.readyState === WebSocket.OPEN){
+          // upstgream is connected, forward message
+          relay.send(event.data);
+        }
+      }
+    };
+    const handleSourceClose = () => {
+      if (relay && relay.readyState === WebSocket.OPEN) relay.close();
     };
 
-    // connect to the upstream relay by default
-    let upstreamRelay: CustomWebSocket | undefined;
-    if (UPSTREAM) {
-      upstreamRelay = new CustomWebSocket(UPSTREAM, { agent: this.network.agent });
+    // Relay listeners
+    let relayCleanup: (() => void)|undefined = undefined
+    if(relay){
+      const handleRelayMessage = (event: CustomMessageEvent) => {
+        if(Array.isArray(event.data)){
+          source.send(Buffer.concat(event.data))
+        }
+        else source.send(event.data);
+      };
+      const handleRelayError = (err: CustomErrorEvent) => {
+        this.log(`Connection error to ${relay.url}`, err);
+        // close source socket because relay is unreachable
+        source.close()
+      };
+      const handleRelayClose = () => {
+        if(source.readyState === WebSocket.OPEN) source.close();
+      }
+      const handleRelayConnected = () => {
+        if(source.readyState !== WebSocket.OPEN){
+          // close the relay connection if the source isn't open
+          relay.close()
+        }
+        else {
+          // replay buffer
+          for (const data of buffer) relay.send(data)
+          buffer = []
+        }
+      }
 
-      upstreamRelay.addEventListener("open", () => {
-        this.log("Connected to upstream relay!");
+      // add listeners
+      relay.addEventListener('open', handleRelayConnected)
+      relay.addEventListener("message", handleRelayMessage);
+      relay.addEventListener("close", handleRelayClose);
+      relay.addEventListener("error", handleRelayError);
 
-        connectSockets(downstream, upstreamRelay!);
+      this.socketConnection.set(source, relay)
+      relayCleanup = () => {
+        relay.removeEventListener('open', handleRelayConnected)
+        relay.removeEventListener("message", handleRelayMessage);
+        relay.removeEventListener("close", handleRelayClose);
+        relay.removeEventListener("error", handleRelayError);
 
-        // Send all buffered items to destination
-        this.log("replaying buffer to defaultRelaySocket");
-        useBuffer = false;
-        buffer.forEach((bufferedMessage) => {
-          handleCustomerMessage(downstream, bufferedMessage, useBuffer, buffer);
-        });
-        buffer = [];
-      });
+        this.socketConnection.delete(source)
+      }
     }
+
+    // Assign source listeners
+    source.addEventListener("message", handleSourceMessage);
+    source.addEventListener("close", handleSourceClose);
+
+    // Save forwards for later cleanup
+    this.socketCleanup.set(source, () => {
+      source.removeEventListener("message", handleSourceMessage);
+      source.removeEventListener("close", handleSourceClose);
+      
+      relayCleanup?.()
+      relay?.close();
+    });
+  }
+
+  // connects an incoming socket to a remote relay
+  connectSocketToUpstream(source: WebSocket, remote: CustomWebSocket){
+    // Disconnect any existing connections before binding new one
+    this.socketCleanup.get(source)?.();
+
+    let dataSent = 0
+    source.send(JSON.stringify(["PROXY", "CONNECTING"]));
+
+    // Source listeners
+    const handleSourceMessage = (event: MessageEvent) => {
+      // Measure the amount of data sent for accounting
+      // NOTE: this should only happen when the socket is being proxied
+      dataSent += Buffer.byteLength(event.data);
+      console.log(`Sent: ${event.data}`);
+      console.log(`Total Data Sent: ${dataSent} bytes`);
+
+      // send data to remote
+      if(remote.readyState === WebSocket.OPEN){
+        remote.send(event.data)
+      }
+    }
+    const handleSourceClose = () => {
+      if(remote.readyState === WebSocket.OPEN) remote.close()
+    }
+
+    // Remote listeners
+    const handleRemoteMessage = (event: CustomMessageEvent) => {
+      // TODO: maybe also measure the data here?
+      if(Array.isArray(event.data)){
+        source.send(Buffer.concat(event.data))
+      }
+      else {
+        source.send(event.data)
+      }
+    }
+    const handleRemoteConnected = () => {
+      source.send(JSON.stringify(["PROXY", "CONNECTED"]));
+    }
+    const handleRemoteError = (err: CustomErrorEvent) => {
+      this.log(`Connection error to ${remote.url}`, err);
+      source.send(JSON.stringify(["PROXY", "ERROR", err.message]));
+    };
+    const handleRemoteClose = () => {
+      // TODO: forward code and reason
+      if(source.readyState === WebSocket.OPEN) source.close()
+    }
+
+    source.addEventListener('message', handleSourceMessage)
+    source.addEventListener('close', handleSourceClose)
+
+    remote.addEventListener("open", handleRemoteConnected);
+    remote.addEventListener("message", handleRemoteMessage);
+    remote.addEventListener("error", handleRemoteError);
+    remote.addEventListener("close", handleRemoteClose);
+
+    this.socketConnection.set(source, remote)
+
+    // set cleanup
+    this.socketCleanup.set(source, () => {
+      source.removeEventListener('message', handleSourceMessage)
+      source.removeEventListener('close', handleSourceClose)
+
+      remote.removeEventListener('open', handleRemoteConnected)
+      remote.removeEventListener("error", handleRemoteError);
+      remote.removeEventListener('message', handleRemoteMessage)
+      remote.removeEventListener('close', handleRemoteClose)
+
+      remote.close()
+      this.socketConnection.delete(source)
+    })
+  }
+
+  handleConnection(source: WebSocket) {
+    // connect to the upstream relay by default
+    let relay: CustomWebSocket | undefined;
+    if (UPSTREAM) {
+      // connect the socket to the relay
+      relay = new CustomWebSocket(UPSTREAM, { agent: this.network.agent });
+    }
+
+    // connect the source to the relay
+    this.connectSocketToRelay(source, relay)
   }
 }

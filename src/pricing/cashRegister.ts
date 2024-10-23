@@ -8,15 +8,15 @@ import logger from "../logger.ts";
 import { Payment } from "../types/payment.ts";
 
 export interface ICashRegister {
-  collectPayment(payment: Payment): Promise<boolean>;
+  collectPayment(payment: Payment): Promise<void>;
 }
 
 @injectable()
 export class CashRegister implements ICashRegister {
   private log = logger.extend(`CashRegister`);
-  private profitsPubkey: string = Deno.env.get("PROFITS_PUBKEY"); // TODO: set default
-  private profitsPayoutThreshold: number = Number(Deno.env.get("PROFIT_PAYOUT_THRESHOLD")) ?? 0;
-  private profitPubkeyLockEnabled: boolean = Deno.env.get("PROFITS_PUBKEY_LOCK") === "true";
+  private profitsPubkey: string = getRequiredEnv("PROFITS_PUBKEY"); // TODO: set default
+  private profitsPayoutThreshold: number = Number(getRequiredEnv("PROFIT_PAYOUT_THRESHOLD")) ?? 0;
+  private profitPubkeyLockEnabled: boolean = getRequiredEnv("PROFITS_PUBKEY_LOCK") === "true";
 
   private wallet: IWallet;
   private eventPublisher: IEventPublisher;
@@ -26,26 +26,16 @@ export class CashRegister implements ICashRegister {
     this.eventPublisher = eventPublisher;
   }
 
-  public async collectPayment(payment: Payment): Promise<boolean> {
-    if (!payment) {
-      return false;
-    }
-
+  public async collectPayment(payment: Payment): Promise<void> {
     try {
-      await this.wallet.add(payment);
+      const amountInWallet = await this.wallet.add(payment.proofs, payment.mint);
 
-      return true;
+      if (amountInWallet >= this.profitsPayoutThreshold) {
+        await this.payoutOwner();
+      }
     } catch (e) {
       console.error("Payment failed: Error redeeming cashu tokens", e);
-      return false;
-    }
-  }
-
-  private async handlePayment(proofs: Proof[]) {
-    const nutSackAmount = await this.wallet.add(proofs);
-
-    if (nutSackAmount >= this.profitsPayoutThreshold) {
-      await this.payoutOwner();
+      throw new Error('Payment failed')
     }
   }
 
