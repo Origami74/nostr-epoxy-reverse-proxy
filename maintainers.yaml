@@ -1,6 +1,7 @@
 identifier: nostr-epoxy-reverse-proxy
 maintainers:
 - npub1hw6amg8p24ne08c9gdq8hhpqx0t0pwanpae9z25crn7m9uy7yarse465gr
+- npub1ye5ptcxfyyxl5vjvdjar2ua3f0hynkjzpx552mu5snj3qmx5pzjscpknpr #hzrd149
 relays:
 - wss://relay.damus.io/
 - wss://nos.lol/

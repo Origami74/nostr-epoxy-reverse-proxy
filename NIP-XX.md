@@ -30,16 +30,41 @@ If requests are not encrypted to a pubkey of the destination, the proxy server c
 broadcast replacable event of kind `18909` event announcing the proxy capability to the network:
 
 Tags:
-tag `n` for network, one or more
+tag `n` for network, one or more.
 
-tag `mint` for mints, one or more
+tag `url` for url, at least one for every `n` tag.
 
-tag `fee` for fee per mb,
+tag `mint` for mints, one or more.
 
-tag `unit` for fee unit,
+tag `fee` for fee per mb.
+
+tag `unit` for fee unit.
+
+#### Example:
+```json
+{
+  "kind": 18909,
+  "tags": [
+    [
+      ["n", "tor"],
+      ["n", "clearnet"],
+      ["url", "http://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion/", "tor"],
+      ["url", "wss://relay.somesite.xyz", "clearnet"],
+      ["url", "wss://relay.another-site.xyz", "clearnet"],
+      ["mint", "https://some.mint.xyz"],
+      ["mint", "https://some-other.mint.xyz"],
+      ["fee", "3"],
+      ["unit", "sat"]
+    ]
+  ],
+  "content": ""
+}
+```
 
 
-### Payments
+### Authorization
+- payment
+- signing (nip-42)
 cashu
 
 ## Client implementation

@@ -14,15 +14,15 @@ importers:
       '@noble/hashes':
         specifier: ^1.5.0
         version: 1.5.0
+      '@nostrify/nostrify':
+        specifier: npm:@jsr/nostrify__nostrify@^0.36.1
+        version: '@jsr/nostrify__nostrify@0.36.1(typescript@5.6.3)'
       applesauce-core:
         specifier: ^0.6.0
         version: 0.6.0(typescript@5.6.3)
       inquirer:
         specifier: ^12.0.0
         version: 12.0.0(@types/node@22.7.6)
-      nostr-tools:
-        specifier: ^2.8.0
-        version: 2.8.0(typescript@5.6.3)
       qrcode-terminal:
         specifier: ^0.12.0
         version: 0.12.0
@@ -105,6 +105,27 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
+
+  '@jsr/nostrify__nostrify@0.36.1':
+    resolution: {integrity: sha512-XBuVNurSmTvLsqBB9S9h9kEhkq1u+EYZ7n5JIJDZOVBNOqZ8Ymd0XyiJwofHK8Qhtkq3jYXqwWXTH9PLFdGv/Q==, tarball: https://npm.jsr.io/~/11/@jsr/nostrify__nostrify/0.36.1.tgz}
+
+  '@jsr/nostrify__types@0.35.0':
+    resolution: {integrity: sha512-dukOLFxyF7JwDvORLvb3PwMFs1HOBIkTyiewkujiGPaQ7FjvvGMiqY/QxbG0qZX5AmTtS65c/lLlg/ni1flrGQ==, tarball: https://npm.jsr.io/~/11/@jsr/nostrify__types/0.35.0.tgz}
+
+  '@jsr/std__assert@0.224.0':
+    resolution: {integrity: sha512-RB0p0ydybgKSfTba6kHWytfpEJ0CBPi+byxZikLYa51L9uLINW52/j6n4KuiLFoh2cdFfpNZSNMY/dzQPW90DQ==, tarball: https://npm.jsr.io/~/11/@jsr/std__assert/0.224.0.tgz}
+
+  '@jsr/std__crypto@0.224.0':
+    resolution: {integrity: sha512-qzZWI8VnH215FS7hmQsAeNafjLMkmSl1OOvexorVUEf1Zl9omHSN87MwIjtmyVXGLtpGRLzIhKXbeup1xO69Zw==, tarball: https://npm.jsr.io/~/11/@jsr/std__crypto/0.224.0.tgz}
+
+  '@jsr/std__encoding@0.224.3':
+    resolution: {integrity: sha512-zAuX2QV1zwJ5RSmrnDGVerAtN3pBXpYYNlGzhERW9AiQ1UJd2/xruyB3i5NdTWy2OK2pjETswOj+0+prYTPlxQ==, tarball: https://npm.jsr.io/~/11/@jsr/std__encoding/0.224.3.tgz}
+
+  '@jsr/std__fmt@0.224.0':
+    resolution: {integrity: sha512-lyrH5LesMB897QW0NIbZlGp72Ucopj2hMZW2wqB0NyZhuXfLH2sPBIUpCSf87kRKTGnx90JV905w4iTp0TD+Sg==, tarball: https://npm.jsr.io/~/11/@jsr/std__fmt/0.224.0.tgz}
+
+  '@jsr/std__internal@0.224.0':
+    resolution: {integrity: sha512-inYzKOGAFK2tyy1D4NfwlbPiqEcSaXfOms3Tm4Y+1LmKSYOeB9wjqWHF4y/BJuYj8XUv61F7eaHaIw6NIlhBWg==, tarball: https://npm.jsr.io/~/11/@jsr/std__internal/0.224.0.tgz}
 
   '@noble/ciphers@0.5.3':
     resolution: {integrity: sha512-B0+6IIHiqEs3BPMT0hcRmHvEj2QHOLu+uwt+tqDDeVd0oyVzh7BPrDcPjRnV1PV/5LaknXJJQvOuRGR0zQJz+w==}
@@ -225,6 +246,9 @@ packages:
     resolution: {integrity: sha512-q3PN0lbUdv0pmurkBNdJH3pfFvOTL/Zp0lquqpvcjfKzt6Y0j49EPHAmVHCAS4Ceq/Y+PejWTzyiVpoY71+D6g==}
     engines: {node: '>= 4'}
 
+  lru-cache@10.4.3:
+    resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
+
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
@@ -237,8 +261,8 @@ packages:
     engines: {node: ^18 || >=20}
     hasBin: true
 
-  nostr-tools@2.8.0:
-    resolution: {integrity: sha512-aumZBa9Ok/cAJLovSBCIA/DkJjLjF/Hs5DpQGEjmyfaUkGBqd5jZjzalcVMyy/9HkkRZfJmbTPtqHTKFNvBSHQ==}
+  nostr-tools@2.8.1:
+    resolution: {integrity: sha512-lInnbSjtBHviiEpxRt4rV73XdC9lMUuaMkvsiNVpIboGwebP19w4NOx91QRfupczGTSiKxV5X3GzxRr3IvHuCw==}
     peerDependencies:
       typescript: '>=5.0.0'
     peerDependenciesMeta:
@@ -302,6 +326,9 @@ packages:
   undici-types@6.19.8:
     resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
 
+  websocket-ts@2.1.5:
+    resolution: {integrity: sha512-rCNl9w6Hsir1azFm/pbjBEFzLD/gi7Th5ZgOxMifB6STUfTSovYAzryWw0TRvSZ1+Qu1Z5Plw4z42UfTNA9idA==}
+
   wrap-ansi@6.2.0:
     resolution: {integrity: sha512-r6lPcBGxZXlIcymEu7InxDMhdW0KDxpLgoFLcguasxCaJ/SOIZwINatK9KY/tf+ZrlywOKU0UDj3ATXUBfxJXA==}
     engines: {node: '>=8'}
@@ -330,6 +357,9 @@ packages:
 
   zen-push@0.3.1:
     resolution: {integrity: sha512-6XNTSVz8Z/5+8BzOQFQr+HOr/j7K+ZJfc4tdCCmuiq8y2Ph+aODqagZnXKbKIFZrQ3nSIcdek9gAuEe+p3zJUg==}
+
+  zod@3.23.8:
+    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
 
 snapshots:
 
@@ -467,6 +497,41 @@ snapshots:
     dependencies:
       '@types/node': 22.7.6
 
+  '@jsr/nostrify__nostrify@0.36.1(typescript@5.6.3)':
+    dependencies:
+      '@jsr/nostrify__types': 0.35.0
+      '@jsr/std__crypto': 0.224.0
+      '@jsr/std__encoding': 0.224.3
+      '@scure/base': 1.1.9
+      '@scure/bip32': 1.5.0
+      '@scure/bip39': 1.4.0
+      lru-cache: 10.4.3
+      nostr-tools: 2.8.1(typescript@5.6.3)
+      websocket-ts: 2.1.5
+      zod: 3.23.8
+    transitivePeerDependencies:
+      - typescript
+
+  '@jsr/nostrify__types@0.35.0': {}
+
+  '@jsr/std__assert@0.224.0':
+    dependencies:
+      '@jsr/std__fmt': 0.224.0
+      '@jsr/std__internal': 0.224.0
+
+  '@jsr/std__crypto@0.224.0':
+    dependencies:
+      '@jsr/std__assert': 0.224.0
+      '@jsr/std__encoding': 0.224.3
+
+  '@jsr/std__encoding@0.224.3': {}
+
+  '@jsr/std__fmt@0.224.0': {}
+
+  '@jsr/std__internal@0.224.0':
+    dependencies:
+      '@jsr/std__fmt': 0.224.0
+
   '@noble/ciphers@0.5.3': {}
 
   '@noble/curves@1.1.0':
@@ -495,7 +560,7 @@ snapshots:
     dependencies:
       '@noble/curves': 1.1.0
       '@noble/hashes': 1.3.2
-      '@scure/base': 1.1.1
+      '@scure/base': 1.1.9
 
   '@scure/bip32@1.5.0':
     dependencies:
@@ -506,7 +571,7 @@ snapshots:
   '@scure/bip39@1.2.1':
     dependencies:
       '@noble/hashes': 1.3.2
-      '@scure/base': 1.1.1
+      '@scure/base': 1.1.9
 
   '@scure/bip39@1.4.0':
     dependencies:
@@ -534,7 +599,7 @@ snapshots:
       debug: 4.3.7
       json-stringify-deterministic: 1.0.12
       nanoid: 5.0.7
-      nostr-tools: 2.8.0(typescript@5.6.3)
+      nostr-tools: 2.8.1(typescript@5.6.3)
       zen-observable: 0.10.0
       zen-push: 0.3.1
     transitivePeerDependencies:
@@ -592,13 +657,15 @@ snapshots:
 
   json-stringify-deterministic@1.0.12: {}
 
+  lru-cache@10.4.3: {}
+
   ms@2.1.3: {}
 
   mute-stream@2.0.0: {}
 
   nanoid@5.0.7: {}
 
-  nostr-tools@2.8.0(typescript@5.6.3):
+  nostr-tools@2.8.1(typescript@5.6.3):
     dependencies:
       '@noble/ciphers': 0.5.3
       '@noble/curves': 1.2.0
@@ -651,6 +718,8 @@ snapshots:
 
   undici-types@6.19.8: {}
 
+  websocket-ts@2.1.5: {}
+
   wrap-ansi@6.2.0:
     dependencies:
       ansi-styles: 4.3.0
@@ -668,3 +737,5 @@ snapshots:
   zen-push@0.3.1:
     dependencies:
       zen-observable: 0.9.0
+
+  zod@3.23.8: {}
