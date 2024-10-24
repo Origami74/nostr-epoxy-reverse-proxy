@@ -1,12 +1,12 @@
 import { inject, injectable } from "tsyringe";
-import { WebSocket as CustomWebSocket, MessageEvent as CustomMessageEvent, ErrorEvent as CustomErrorEvent } from "ws";
+import { WebSocket, MessageEvent, ErrorEvent as CustomErrorEvent } from "ws";
+import { Proof } from "@cashu/cashu-ts";
 
 import { MINT_UNIT, MINT_URL, PRICE_PER_KIB, UPSTREAM } from "../env.js";
 import OutboundNetwork, { type IOutboundNetwork } from "./outbound.js";
 import logger from "../logger.js";
 import { CashRegister, type ICashRegister } from "../pricing/cashRegister.js";
 import { TrafficMeter, type ITrafficMeter } from "./monitoring/trafficMeter.js";
-import { Proof } from "@cashu/cashu-ts";
 
 export interface ISwitchboard {
   handleConnection(source: WebSocket): void;
@@ -18,7 +18,7 @@ export default class Switchboard implements ISwitchboard {
   private cashRegister: ICashRegister;
   private network: IOutboundNetwork;
 
-  private socketConnection = new Map<WebSocket, CustomWebSocket>();
+  private socketConnection = new Map<WebSocket, WebSocket>();
   private socketCleanup = new Map<WebSocket, () => void>();
   private trafficMeter: ITrafficMeter;
 
@@ -33,7 +33,7 @@ export default class Switchboard implements ISwitchboard {
   }
 
   // connect an incoming socket to the relay (optional)
-  connectSocketToRelay(source: WebSocket, relay?: CustomWebSocket) {
+  connectSocketToRelay(source: WebSocket, relay?: WebSocket) {
     // Disconnect any existing connections before binding new one
     this.socketCleanup.get(source)?.();
 
@@ -60,7 +60,7 @@ export default class Switchboard implements ISwitchboard {
             this.trafficMeter.set(allowanceInKiB);
 
             // create upstream socket
-            const upstream = new CustomWebSocket(targetUrl, { agent: this.network.agent });
+            const upstream = new WebSocket(targetUrl, { agent: this.network.agent });
             upstream.binaryType = "arraybuffer"; // Needed to prevent having to convert Node Buffers to ArrayBuffers
 
             this.connectSocketToUpstream(source, upstream);
@@ -100,7 +100,7 @@ export default class Switchboard implements ISwitchboard {
     // Relay listeners
     let relayCleanup: (() => void) | undefined = undefined;
     if (relay) {
-      const handleRelayMessage = (event: CustomMessageEvent) => {
+      const handleRelayMessage = (event: MessageEvent) => {
         this.forwardEvent(source, event);
       };
 
@@ -157,7 +157,7 @@ export default class Switchboard implements ISwitchboard {
   }
 
   // connects an incoming socket to a remote relay
-  connectSocketToUpstream(source: WebSocket, remote: CustomWebSocket) {
+  connectSocketToUpstream(source: WebSocket, remote: WebSocket) {
     // Disconnect any existing connections before binding new one
     this.socketCleanup.get(source)?.();
 
@@ -184,7 +184,7 @@ export default class Switchboard implements ISwitchboard {
     };
 
     // Remote listeners
-    const handleRemoteMessage = (event: CustomMessageEvent) => {
+    const handleRemoteMessage = (event: MessageEvent) => {
       const meterRunning = this.trafficMeter.measureDownstream(event.data);
 
       if (!meterRunning) {
@@ -233,7 +233,7 @@ export default class Switchboard implements ISwitchboard {
     });
   }
 
-  private forwardEvent(downstream: WebSocket, event: CustomMessageEvent) {
+  private forwardEvent(downstream: WebSocket, event: MessageEvent) {
     if (typeof event.data == "string") {
       downstream.send(event.data);
     } else if (event.data instanceof ArrayBuffer) {
@@ -245,10 +245,10 @@ export default class Switchboard implements ISwitchboard {
 
   handleConnection(source: WebSocket) {
     // connect to the upstream relay by default
-    let relay: CustomWebSocket | undefined;
+    let relay: WebSocket | undefined;
     if (UPSTREAM) {
       // connect the socket to the relay
-      relay = new CustomWebSocket(UPSTREAM, { agent: this.network.agent });
+      relay = new WebSocket(UPSTREAM, { agent: this.network.agent });
       relay.binaryType = "arraybuffer"; // Needed to prevent having to convert Node Buffers to ArrayBuffers
     }
 

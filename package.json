@@ -7,6 +7,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",
+    "dev": "node --loader @swc-node/register/esm src/index.ts",
     "format": "prettier -w ."
   },
   "keywords": [],
@@ -26,6 +27,9 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@swc-node/register": "^1.9.0",
+    "@swc/core": "^1.7.26",
+    "@swc/types": "^0.1.12",
     "@types/debug": "^4.1.12",
     "@types/node": "^22.7.9",
     "@types/ws": "^8.5.12",

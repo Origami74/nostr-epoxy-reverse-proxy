@@ -2,7 +2,7 @@ import { injectable } from "tsyringe";
 import { Buffer } from "node:buffer";
 
 export interface ITrafficMeter {
-  measureUpstream(data: string | Buffer | NodeJS.ArrayBufferView | ArrayBuffer | SharedArrayBuffer): boolean;
+  measureUpstream(data: string | Buffer | NodeJS.ArrayBufferView | ArrayBuffer | SharedArrayBuffer | Buffer[]): boolean;
   measureDownstream(
     data: string | Buffer | NodeJS.ArrayBufferView | ArrayBuffer | SharedArrayBuffer | Buffer[],
   ): boolean;
