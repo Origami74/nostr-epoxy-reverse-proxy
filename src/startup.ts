@@ -7,6 +7,7 @@ import Switchboard, { type ISwitchboard } from "./network/switchboard.ts";
 import OutboundNetwork from "./network/outbound.ts";
 import PubkeyResolver from "./network/pubkeyResolver.ts";
 import { EventPublisher } from "./eventPublisher.ts";
+import { TrafficMeter } from "./network/monitoring/trafficMeter.ts";
 
 export function startup() {
   console.info("Running startup");
@@ -18,6 +19,8 @@ export function startup() {
   container.registerSingleton(Switchboard.name, Switchboard);
   container.registerSingleton(OutboundNetwork.name, OutboundNetwork);
   container.register(PubkeyResolver.name, PubkeyResolver);
+
+  container.register(TrafficMeter.name, {useClass: TrafficMeter});
 
   console.info("All services registered");
   container.resolve<ISwitchboard>(Switchboard.name);

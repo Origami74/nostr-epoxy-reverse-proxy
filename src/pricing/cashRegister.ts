@@ -7,9 +7,10 @@ import { EventPublisher } from "../eventPublisher.ts";
 import type { IEventPublisher } from "../eventPublisher.ts";
 import logger from "../logger.ts";
 import { Payment } from "../types/payment.ts";
+import { getAmount } from "../helpers/money.ts";
 
 export interface ICashRegister {
-  collectPayment(payment: Payment): Promise<void>;
+  collectPayment(payment: Payment): Promise<number>;
 }
 
 @injectable()
@@ -27,13 +28,17 @@ export class CashRegister implements ICashRegister {
     this.eventPublisher = eventPublisher;
   }
 
-  public async collectPayment(payment: Payment): Promise<void> {
+  public async collectPayment(payment: Payment): Promise<number> {
     try {
       const amountInWallet = await this.wallet.add(payment.proofs, payment.mint);
+      
 
+      // TODO: extract payout to background job
       if (amountInWallet >= this.profitsPayoutThreshold) {
         await this.payoutOwner();
       }
+
+      return getAmount(payment.proofs);
     } catch (e) {
       console.error("Payment failed: Error redeeming cashu tokens", e);
       throw new Error("Payment failed");
@@ -41,9 +46,8 @@ export class CashRegister implements ICashRegister {
   }
 
   private async payoutOwner() {
-    const nuts: Proof[] = await this.wallet.takeAll();
+    const cashuToken = await this.wallet.takeAllAsCashuToken();
 
-    const cashuToken = this.wallet.toCashuToken(nuts);
 
     try {
       this.eventPublisher.publishDM(
