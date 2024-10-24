@@ -1,15 +1,11 @@
 import { injectable } from "tsyringe";
-import { CashuMint, CashuWallet, Proof, getEncodedToken } from "@cashu/cashu-ts";
-
-import { MINT_URL, PRIVATE_KEY } from "../env.ts";
 import { CashuMint, CashuWallet, Proof } from "@cashu/cashu-ts";
-import { getRequiredEnv } from "../helpers/env.ts";
-import { toCashuToken } from "../helpers/money.ts";
+import { getAmount, toCashuToken } from "../helpers/money.ts";
 
 export interface IWallet {
   add(proofs: Proof[], mintUrl: string): Promise<number>;
   takeAll(pubkey?: string): Promise<Proof[]>;
-  takeAlAsCashuToken(pubkey?: string): Promise<string>;
+  takeAllAsCashuToken(pubkey?: string): Promise<string>;
   remove(proofs: Proof[]): number;
 }
 
@@ -17,8 +13,8 @@ export interface IWallet {
 export class Wallet implements IWallet {
   private nutSack: Proof[] = [];
 
-  private relayPrivateKey = PRIVATE_KEY;
-  private mintUrl = MINT_URL;
+  private relayPrivateKey: string = PRIVATE_KEY;
+  private mintUrl: string = MINT_URL;
   private mint = new CashuMint(this.mintUrl);
   private cashuWallet = new CashuWallet(this.mint);
 
@@ -34,8 +30,8 @@ export class Wallet implements IWallet {
 
     this.nutSack = this.nutSack.concat(redeemedProofs);
 
-    const receivedAmount = this.getAmount(proofs);
-    const nutSackAmount = this.getAmount(this.nutSack);
+    const receivedAmount = getAmount(proofs);
+    const nutSackAmount = getAmount(this.nutSack);
     console.log(`Received ${receivedAmount} sats, wallet now contains ${nutSackAmount} sats`);
 
     return nutSackAmount;
@@ -48,8 +44,8 @@ export class Wallet implements IWallet {
   public remove(proofsToRemove: Proof[]): number {
     this.nutSack = this.nutSack.filter((proof) => !proofsToRemove.includes(proof));
 
-    const removedAmount = this.getAmount(proofsToRemove);
-    const nutSackAmount = this.getAmount(this.nutSack);
+    const removedAmount = getAmount(proofsToRemove);
+    const nutSackAmount = getAmount(this.nutSack);
     console.log(`Removed ${removedAmount} sats, wallet now contains ${nutSackAmount} sats`);
 
     return nutSackAmount;

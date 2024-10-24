@@ -1,57 +1,12 @@
 import { inject, injectable } from "tsyringe";
-import { Buffer } from "node:buffer";
+import { Buffer, Blob } from "node:buffer";
 import { WebSocket as CustomWebSocket, MessageEvent as CustomMessageEvent, ErrorEvent as CustomErrorEvent } from "ws";
-
+import { PRICE_PER_KIB, UPSTREAM } from "../env.ts";
 import OutboundNetwork from "./outbound.ts";
 import logger from "../logger.ts";
 import { CashRegister, type ICashRegister } from "../pricing/cashRegister.ts";
 import { TrafficMeter, type ITrafficMeter } from "./monitoring/trafficMeter.ts";
 import type { Payment } from "../types/payment.ts";
-
-async function handleCustomerMessage(
-  customerSocket: WebSocket,
-  message: MessageEvent,
-  useBuffer: boolean,
-  buffer: MessageEvent[],
-): Promise<void> {
-  try {
-    const data = JSON.parse(message.data);
-
-    if (!Array.isArray(data)) throw new Error("Message is not an array");
-
-    this.log(`message from consumer: ${message.data}`);
-
-    if (useBuffer) {
-      buffer.push(message);
-      return;
-    }
-
-    const targetUrl = data[1];
-    const payment: Payment | undefined = data[2];
-
-    if (data[0] == "PROXY" && targetUrl) {
-      const userPaid = await this.cashRegister.collectPayment(payment);
-
-      if (!userPaid) {
-        customerSocket.send(JSON.stringify(["PROXY", "PAYMENT_REQUIRED", products]));
-        return;
-      }
-
-      const customerDestSocket = new CustomWebSocket(targetUrl);
-      customerSocket.send(JSON.stringify(["PROXY", "CONNECTING"]));
-
-      connectSockets(customerSocket, customerDestSocket);
-
-      customerDestSocket.addEventListener("open", () => {
-        useBuffer = false;
-        customerSocket.send(JSON.stringify(["PROXY", "CONNECTED"]));
-      });
-      return;
-    }
-  } catch (err) {
-    this.log(`error processing message: ${err.message}`);
-  }
-}
 
 export interface ISwitchboard {
   handleConnection(source: WebSocket): void;
@@ -64,7 +19,6 @@ export default class Switchboard implements ISwitchboard {
   private network: OutboundNetwork;
 
   private socketConnection = new Map<WebSocket, CustomWebSocket>();
-
   private socketCleanup = new Map<WebSocket, () => void>();
   private trafficMeter: ITrafficMeter;
 
@@ -96,15 +50,18 @@ export default class Switchboard implements ISwitchboard {
           const targetUrl = message[1];
           const payment: Payment = JSON.parse(message[2]);
 
-          // user is paying
+          // customer is paying
           if (payment) {
             const collectedAmount = await this.cashRegister.collectPayment(payment);
 
-            // add allowance to the meter
-            // this.trafficMeter.set(payment.)
+            // Set the traffic meter
+            const allowanceInKiB = collectedAmount / PRICE_PER_KIB;
+            this.trafficMeter.set(allowanceInKiB);
 
             // create upstream socket
             const upstream = new CustomWebSocket(targetUrl, { agent: this.network.agent });
+            upstream.binaryType = "arraybuffer"; // Needed to prevent having to convert Node Buffers to ArrayBuffers
+
             this.connectSocketToUpstream(source, upstream);
           } else {
             // tell user they have to pay
@@ -120,7 +77,7 @@ export default class Switchboard implements ISwitchboard {
           buffer.push(event.data);
         } else if (relay.readyState === WebSocket.OPEN) {
           // upstgream is connected, forward message
-          relay.send(event.data);
+          relay.send(event.data, { binary: typeof event.data != "string" });
         }
       }
     };
@@ -132,25 +89,26 @@ export default class Switchboard implements ISwitchboard {
     let relayCleanup: (() => void) | undefined = undefined;
     if (relay) {
       const handleRelayMessage = (event: CustomMessageEvent) => {
-        if (Array.isArray(event.data)) {
-          source.send(Buffer.concat(event.data));
-        } else source.send(event.data);
+        this.forwardEvent(source, event);
       };
+
       const handleRelayError = (err: CustomErrorEvent) => {
         this.log(`Connection error to ${relay.url}`, err);
         // close source socket because relay is unreachable
         source.close();
       };
+
       const handleRelayClose = () => {
         if (source.readyState === WebSocket.OPEN) source.close();
       };
+
       const handleRelayConnected = () => {
         if (source.readyState !== WebSocket.OPEN) {
           // close the relay connection if the source isn't open
           relay.close();
         } else {
           // replay buffer
-          for (const data of buffer) relay.send(data);
+          for (const data of buffer) relay.send(data, { binary: typeof data != "string" });
           buffer = [];
         }
       };
@@ -191,22 +149,21 @@ export default class Switchboard implements ISwitchboard {
     // Disconnect any existing connections before binding new one
     this.socketCleanup.get(source)?.();
 
-    let dataSent = 0;
-    let dataReceived = 0;
-    let totalDataTransfer = () => dataSent + dataReceived;
-
     source.send(JSON.stringify(["PROXY", "CONNECTING"]));
 
     // Source listeners
     const handleSourceMessage = (event: MessageEvent) => {
-      this.trafficMeter.measureOut(event.data);
-      dataSent += Buffer.byteLength(event.data, "utf-8");
-      console.log(`Sent: ${event.data}`);
-      console.log(`Total Data Sent/Received in bytes: ${dataSent}/${dataReceived} total ${totalDataTransfer()}`);
+      const meterRunning = this.trafficMeter.measureUpstream(event.data);
+
+      if (!meterRunning) {
+        source.close(1, "Connection bankrupted");
+        remote.close(); // TODO: Cleanup
+        return;
+      }
 
       // send data to remote
       if (remote.readyState === WebSocket.OPEN) {
-        remote.send(event.data);
+        remote.send(event.data, { binary: typeof event.data != "string" });
       }
     };
 
@@ -216,12 +173,15 @@ export default class Switchboard implements ISwitchboard {
 
     // Remote listeners
     const handleRemoteMessage = (event: CustomMessageEvent) => {
-      // TODO: maybe also measure the data here?
-      if (Array.isArray(event.data)) {
-        source.send(Buffer.concat(event.data));
-      } else {
-        source.send(event.data);
+      const meterRunning = this.trafficMeter.measureDownstream(event.data);
+
+      if (!meterRunning) {
+        source.close(1, "Connection bankrupted");
+        remote.close(); // TODO: Cleanup
+        return;
       }
+
+      this.forwardEvent(source, event);
     };
     const handleRemoteConnected = () => {
       source.send(JSON.stringify(["PROXY", "CONNECTED"]));
@@ -261,12 +221,23 @@ export default class Switchboard implements ISwitchboard {
     });
   }
 
+  private forwardEvent(downstream: WebSocket, event: CustomMessageEvent) {
+    if (typeof event.data == "string") {
+      downstream.send(event.data);
+    } else if (event.data instanceof ArrayBuffer) {
+      downstream.send(event.data);
+    } else {
+      console.log("Unexpected type of event.data");
+    }
+  }
+
   handleConnection(source: WebSocket) {
     // connect to the upstream relay by default
     let relay: CustomWebSocket | undefined;
     if (UPSTREAM) {
       // connect the socket to the relay
       relay = new CustomWebSocket(UPSTREAM, { agent: this.network.agent });
+      relay.binaryType = "arraybuffer"; // Needed to prevent having to convert Node Buffers to ArrayBuffers
     }
 
     // connect the source to the relay
