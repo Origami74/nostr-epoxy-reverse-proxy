@@ -7,6 +7,7 @@ import OutboundNetwork, { type IOutboundNetwork } from "./outbound.js";
 import logger from "../logger.js";
 import { CashRegister, type ICashRegister } from "../pricing/cashRegister.js";
 import { TrafficMeter, type ITrafficMeter } from "./monitoring/trafficMeter.js";
+import PubkeyResolver, { IPubkeyResolver } from "./pubkeyResolver.js";
 
 export interface ISwitchboard {
   handleConnection(source: WebSocket): void;
@@ -17,6 +18,7 @@ export default class Switchboard implements ISwitchboard {
   private log = logger.extend("Switchboard");
   private cashRegister: ICashRegister;
   private network: IOutboundNetwork;
+  private resolve: IPubkeyResolver;
 
   private socketConnection = new Map<WebSocket, WebSocket>();
   private socketCleanup = new Map<WebSocket, () => void>();
@@ -26,10 +28,12 @@ export default class Switchboard implements ISwitchboard {
     @inject(OutboundNetwork.name) network: IOutboundNetwork,
     @inject(CashRegister.name) cashRegister: ICashRegister,
     @inject(TrafficMeter.name) trafficMonitor: ITrafficMeter,
+    @inject(PubkeyResolver.name) resolve: IPubkeyResolver,
   ) {
     this.network = network;
     this.cashRegister = cashRegister;
     this.trafficMeter = trafficMonitor;
+    this.resolve = resolve;
   }
 
   // connect an incoming socket to the relay (optional)
@@ -48,7 +52,7 @@ export default class Switchboard implements ISwitchboard {
           const message = JSON.parse(event.data) as [string, string] | [string, string, Proof[]];
           if (!Array.isArray(message) || message[0] !== "PROXY") throw new Error("Broken proxy message");
 
-          const targetUrl = message[1];
+          let targetUrl = message[1];
           const paymentProofs = message[2] as undefined | Proof[];
 
           // customer is paying
@@ -58,6 +62,16 @@ export default class Switchboard implements ISwitchboard {
             // Set the traffic meter
             const allowanceInKiB = collectedAmount / PRICE_PER_KIB;
             this.trafficMeter.set(allowanceInKiB);
+
+            // resolve pubkey
+            if (targetUrl.match(/[0-9a-f]{64}/)) {
+              const pubkey = targetUrl;
+              const addresses = await this.resolve.lookup(pubkey);
+
+              // TODO: add fallback logic
+              targetUrl = this.network.filterAddresses(addresses)[0];
+              if (!targetUrl) throw new Error("Failed to find good address for pubkey");
+            }
 
             // create upstream socket
             const upstream = new WebSocket(targetUrl, { agent: this.network.agent });
