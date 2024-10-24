@@ -1,13 +1,13 @@
 import { injectable, inject } from "tsyringe";
 import { Proof } from "@cashu/cashu-ts";
 
-import type { IWallet } from "./wallet.ts";
-import { Wallet } from "./wallet.ts";
-import { EventPublisher } from "../eventPublisher.ts";
-import type { IEventPublisher } from "../eventPublisher.ts";
-import logger from "../logger.ts";
-import { getAmount, toCashuToken } from "../helpers/money.ts";
-import { PROFIT_PAYOUT_THRESHOLD, PROFITS_PUBKEY } from "../env.ts";
+import type { IWallet } from "./wallet.js";
+import { Wallet } from "./wallet.js";
+import { EventPublisher } from "../eventPublisher.js";
+import type { IEventPublisher } from "../eventPublisher.js";
+import logger from "../logger.js";
+import { getAmount, toCashuToken } from "../helpers/money.js";
+import { PROFIT_PAYOUT_THRESHOLD, PROFITS_PUBKEY } from "../env.js";
 
 export interface ICashRegister {
   collectPayment(proofs: Proof[]): Promise<number>;

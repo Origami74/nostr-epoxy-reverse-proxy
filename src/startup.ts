@@ -1,13 +1,13 @@
 import { container } from "tsyringe";
 
-import { Wallet } from "./pricing/wallet.ts";
-import { CashRegister } from "./pricing/cashRegister.ts";
-import { RelayProvider } from "./relayProvider.ts";
-import Switchboard, { type ISwitchboard } from "./network/switchboard.ts";
-import OutboundNetwork from "./network/outbound.ts";
-import PubkeyResolver from "./network/pubkeyResolver.ts";
-import { EventPublisher } from "./eventPublisher.ts";
-import { TrafficMeter } from "./network/monitoring/trafficMeter.ts";
+import { Wallet } from "./pricing/wallet.js";
+import { CashRegister } from "./pricing/cashRegister.js";
+import { RelayProvider } from "./relayProvider.js";
+import Switchboard, { type ISwitchboard } from "./network/switchboard.js";
+import OutboundNetwork from "./network/outbound.js";
+import PubkeyResolver from "./network/pubkeyResolver.js";
+import { EventPublisher } from "./eventPublisher.js";
+import { TrafficMeter } from "./network/monitoring/trafficMeter.js";
 
 export function startup() {
   console.info("Running startup");

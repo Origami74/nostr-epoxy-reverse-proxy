@@ -2,8 +2,12 @@ import { hexToBytes } from "@noble/hashes/utils";
 import "dotenv/config";
 
 function requiredEnv(name: string, message?: string) {
-  if (!Deno.env.has(name)) throw new Error(message ?? `Missing ${name}`);
-  return Deno.env.get(name)!;
+  if (process.env[name] === undefined) throw new Error(message ?? `Missing ${name}`);
+  return process.env[name];
+}
+
+function optionalEnv(name: string) {
+  return process.env[name];
 }
 
 const PRICE_PER_KIB = parseFloat(requiredEnv("PRICE_PER_KIB"));
@@ -12,25 +16,25 @@ const NOSTR_RELAYS = requiredEnv("NOSTR_RELAYS")?.split(",");
 
 // Money config
 const MINT_URL = requiredEnv("MINT_URL");
-const MINT_UNIT = Deno.env.get("MINT_UNIT") ?? "sat";
+const MINT_UNIT = optionalEnv("MINT_UNIT") ?? "sat";
 const PROFITS_PUBKEY = requiredEnv("PROFITS_PUBKEY");
-const PROFIT_PAYOUT_THRESHOLD = parseInt(Deno.env.get("PROFIT_PAYOUT_THRESHOLD") ?? "25");
+const PROFIT_PAYOUT_THRESHOLD = parseInt(optionalEnv("PROFIT_PAYOUT_THRESHOLD") ?? "25");
 
-const UPSTREAM = Deno.env.get("UPSTREAM");
+const UPSTREAM = optionalEnv("UPSTREAM");
 
 // service config (kind 0)
-const SERVICE_NAME = Deno.env.get("SERVICE_NAME");
-const SERVICE_ABOUT = Deno.env.get("SERVICE_ABOUT");
-const SERVICE_PICTURE = Deno.env.get("SERVICE_PICTURE");
+const SERVICE_NAME = optionalEnv("SERVICE_NAME");
+const SERVICE_ABOUT = optionalEnv("SERVICE_ABOUT");
+const SERVICE_PICTURE = optionalEnv("SERVICE_PICTURE");
 
 // Outbound network
-const I2P_PROXY = Deno.env.get("I2P_PROXY");
-const TOR_PROXY = Deno.env.get("TOR_PROXY");
+const I2P_PROXY = optionalEnv("I2P_PROXY");
+const TOR_PROXY = optionalEnv("TOR_PROXY");
 
 // Inbound network
-const CLEARNET_URL = Deno.env.get("CLEARNET_URL");
-const TOR_URL = Deno.env.get("TOR_URL");
-const I2P_URL = Deno.env.get("I2P_URL");
+const CLEARNET_URL = optionalEnv("CLEARNET_URL");
+const TOR_URL = optionalEnv("TOR_URL");
+const I2P_URL = optionalEnv("I2P_URL");
 
 const PRIVATE_KEY = hexToBytes(PRIVATE_KEY_HEX);
 

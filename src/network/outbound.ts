@@ -2,8 +2,8 @@ import { ProxyAgent } from "proxy-agent";
 import { PacProxyAgent } from "pac-proxy-agent";
 import { injectable } from "tsyringe";
 
-import logger from "../logger.ts";
-import { I2P_PROXY, TOR_PROXY } from "../env.ts";
+import logger from "../logger.js";
+import { I2P_PROXY, TOR_PROXY } from "../env.js";
 
 function buildPacURI() {
   const statements: string[] = [];

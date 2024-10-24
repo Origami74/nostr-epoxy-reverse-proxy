@@ -1,11 +1,11 @@
 import { inject, injectable } from "tsyringe";
 import { NStore, NSecSigner } from "@nostrify/nostrify";
 
-import logger from "./logger.ts";
-import { unixNow } from "./helpers/date.ts";
-import { RelayProvider } from "./relayProvider.ts";
-import type { IRelayProvider } from "./relayProvider.ts";
-import { PRIVATE_KEY } from "./env.ts";
+import logger from "./logger.js";
+import { unixNow } from "./helpers/date.js";
+import { RelayProvider } from "./relayProvider.js";
+import type { IRelayProvider } from "./relayProvider.js";
+import { PRIVATE_KEY } from "./env.js";
 
 export interface IEventPublisher {
   publish(kind: number, tags: string[][], content: string): Promise<void>;

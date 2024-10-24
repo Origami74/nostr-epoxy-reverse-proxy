@@ -1,8 +1,8 @@
 import { NRelay1, NPool, NStore, NCache, NostrFilter, NostrEvent } from "@nostrify/nostrify";
 import { injectable } from "tsyringe";
 
-import logger from "./logger.ts";
-import { NOSTR_RELAYS } from "./env.ts";
+import logger from "./logger.js";
+import { NOSTR_RELAYS } from "./env.js";
 
 export interface IRelayProvider {
   getDefaultPool(): NStore;

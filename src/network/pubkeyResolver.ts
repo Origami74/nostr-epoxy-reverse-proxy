@@ -1,7 +1,7 @@
 import { injectable, inject } from "tsyringe";
 
-import { unixNow } from "../helpers/date.ts";
-import { RelayProvider, type IRelayProvider } from "../relayProvider.ts";
+import { unixNow } from "../helpers/date.js";
+import { RelayProvider, type IRelayProvider } from "../relayProvider.js";
 
 export interface IPubkeyResolver {
   lookup(pubkey: string): Promise<string[]>;

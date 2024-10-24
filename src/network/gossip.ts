@@ -1,9 +1,9 @@
 import { inject, injectable } from "tsyringe";
 
-import logger from "../logger.ts";
-import OutboundNetwork from "./outbound.ts";
-import { EventPublisher } from "../eventPublisher.ts";
-import type { IEventPublisher } from "../eventPublisher.ts";
+import logger from "../logger.js";
+import OutboundNetwork from "./outbound.js";
+import { EventPublisher } from "../eventPublisher.js";
+import type { IEventPublisher } from "../eventPublisher.js";
 import {
   MINT_UNIT,
   SERVICE_ABOUT,
@@ -14,9 +14,9 @@ import {
   I2P_URL,
   MINT_URL,
   PRICE_PER_KIB,
-} from "../env.ts";
-import { PROXY_ADVERTIZEMENT_KIND } from "../const.ts";
-import { RelayProvider, type IRelayProvider } from "../relayProvider.ts";
+} from "../env.js";
+import { PROXY_ADVERTIZEMENT_KIND } from "../const.js";
+import { RelayProvider, type IRelayProvider } from "../relayProvider.js";
 
 // function buildGossipTemplate(self: string, address: string, network: string) {
 //   return {
