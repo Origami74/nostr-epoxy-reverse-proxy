@@ -1,12 +1,12 @@
 import { inject, injectable } from "tsyringe";
-import { Buffer, Blob } from "node:buffer";
 import { WebSocket as CustomWebSocket, MessageEvent as CustomMessageEvent, ErrorEvent as CustomErrorEvent } from "ws";
-import { PRICE_PER_KIB, UPSTREAM } from "../env.ts";
-import OutboundNetwork from "./outbound.ts";
+import { MINT_UNIT, MINT_URL, PRICE_PER_KIB, UPSTREAM } from "../env.ts";
+import OutboundNetwork, { type IOutboundNetwork } from "./outbound.ts";
 import logger from "../logger.ts";
 import { CashRegister, type ICashRegister } from "../pricing/cashRegister.ts";
 import { TrafficMeter, type ITrafficMeter } from "./monitoring/trafficMeter.ts";
 import type { Payment } from "../types/payment.ts";
+import { Proof } from "@cashu/cashu-ts";
 
 export interface ISwitchboard {
   handleConnection(source: WebSocket): void;
@@ -16,14 +16,14 @@ export interface ISwitchboard {
 export default class Switchboard implements ISwitchboard {
   private log = logger.extend("Switchboard");
   private cashRegister: ICashRegister;
-  private network: OutboundNetwork;
+  private network: IOutboundNetwork;
 
   private socketConnection = new Map<WebSocket, CustomWebSocket>();
   private socketCleanup = new Map<WebSocket, () => void>();
   private trafficMeter: ITrafficMeter;
 
   constructor(
-    @inject(OutboundNetwork.name) network: OutboundNetwork,
+    @inject(OutboundNetwork.name) network: IOutboundNetwork,
     @inject(CashRegister.name) cashRegister: ICashRegister,
     @inject(TrafficMeter.name) trafficMonitor: ITrafficMeter,
   ) {
@@ -44,15 +44,15 @@ export default class Switchboard implements ISwitchboard {
       if (typeof event.data === "string" && event.data.startsWith('["PROXY')) {
         // handle "PROXY" message
         try {
-          const message = JSON.parse(event.data) as string[];
-          if (!Array.isArray(message) || message[0] !== "PEROXY") throw new Error("Broken proxy message");
+          const message = JSON.parse(event.data) as [string, string] | [string, string, Proof[]];
+          if (!Array.isArray(message) || message[0] !== "PROXY") throw new Error("Broken proxy message");
 
           const targetUrl = message[1];
-          const payment: Payment = JSON.parse(message[2]);
+          const paymentProofs = message[2] as undefined | Proof[];
 
           // customer is paying
-          if (payment) {
-            const collectedAmount = await this.cashRegister.collectPayment(payment);
+          if (paymentProofs) {
+            const collectedAmount = await this.cashRegister.collectPayment(paymentProofs);
 
             // Set the traffic meter
             const allowanceInKiB = collectedAmount / PRICE_PER_KIB;
@@ -65,9 +65,20 @@ export default class Switchboard implements ISwitchboard {
             this.connectSocketToUpstream(source, upstream);
           } else {
             // tell user they have to pay
-            source.send(JSON.stringify(["PROXY", "PAYMENT_REQUIRED", 1000000]));
+            source.send(
+              JSON.stringify([
+                "PROXY",
+                "PAYMENT_REQUIRED",
+                {
+                  price: PRICE_PER_KIB,
+                  mint: MINT_URL,
+                  unit: MINT_UNIT,
+                },
+              ]),
+            );
           }
         } catch (error) {
+          console.error(error);
           if (error instanceof Error) source.send(JSON.stringify(["PROXY", "ERROR", error.message]));
         }
       } else if (relay) {

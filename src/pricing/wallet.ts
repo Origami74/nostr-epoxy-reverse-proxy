@@ -1,20 +1,24 @@
 import { injectable } from "tsyringe";
 import { CashuMint, CashuWallet, Proof } from "@cashu/cashu-ts";
 import { getAmount, toCashuToken } from "../helpers/money.ts";
+import { MINT_URL, PRIVATE_KEY } from "../env.ts";
+import { bytesToHex } from "@noble/hashes/utils";
 
 export interface IWallet {
-  add(proofs: Proof[], mintUrl: string): Promise<number>;
+  add(proofs: Proof[]): Promise<number>;
   takeAll(pubkey?: string): Promise<Proof[]>;
   takeAllAsCashuToken(pubkey?: string): Promise<string>;
   remove(proofs: Proof[]): number;
+
+  mintUrl: string;
 }
 
 @injectable()
 export class Wallet implements IWallet {
   private nutSack: Proof[] = [];
 
-  private relayPrivateKey: string = PRIVATE_KEY;
-  private mintUrl: string = MINT_URL;
+  private relayPrivateKey: string = bytesToHex(PRIVATE_KEY);
+  public mintUrl: string = MINT_URL;
   private mint = new CashuMint(this.mintUrl);
   private cashuWallet = new CashuWallet(this.mint);
 
@@ -22,9 +26,9 @@ export class Wallet implements IWallet {
    * Redeems tokens and adds them to wallet.
    * Returns total amount in wallet
    */
-  public async add(proofs: Proof[], mintUrl: string): Promise<number> {
+  public async add(proofs: Proof[]): Promise<number> {
     const redeemedProofs = await this.cashuWallet.receiveTokenEntry(
-      { proofs: proofs, mint: mintUrl },
+      { proofs: proofs, mint: this.mintUrl },
       { privkey: this.relayPrivateKey },
     );
 

@@ -8,18 +8,22 @@ import OutboundNetwork from "./network/outbound.ts";
 import PubkeyResolver from "./network/pubkeyResolver.ts";
 import { EventPublisher } from "./eventPublisher.ts";
 import { TrafficMeter } from "./network/monitoring/trafficMeter.ts";
+import logger from "./logger.ts";
 
 export function startup() {
   console.info("Running startup");
+
+
 
   container.registerSingleton(EventPublisher.name, EventPublisher);
   container.registerSingleton(RelayProvider.name, RelayProvider);
   container.registerSingleton(Wallet.name, Wallet);
   container.registerSingleton(CashRegister.name, CashRegister);
-  container.registerSingleton(Switchboard.name, Switchboard);
-  container.registerSingleton(OutboundNetwork.name, OutboundNetwork);
-  container.register(PubkeyResolver.name, PubkeyResolver);
 
+  container.registerSingleton(OutboundNetwork.name, OutboundNetwork);
+
+  container.register(Switchboard.name, { useClass: Switchboard });
+  container.register(PubkeyResolver.name, { useClass: PubkeyResolver });
   container.register(TrafficMeter.name, { useClass: TrafficMeter });
 
   console.info("All services registered");

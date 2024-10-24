@@ -1,17 +1,20 @@
 import { hexToBytes } from "@noble/hashes/utils";
+import "dotenv/config";
 
-function requiredEnv(name: string, message: string) {
-  if (!Deno.env.has(name)) throw new Error(message);
+function requiredEnv(name: string, message?: string) {
+  if (!Deno.env.has(name)) throw new Error(message ?? `Missing ${name}`);
   return Deno.env.get(name)!;
 }
 
-const PRICE_PER_KIB = parseFloat(requiredEnv("PRICE_PER_KIB", "Missing PRICE_PER_KIB"));
-const PRIVATE_KEY_HEX = requiredEnv("PRIVATE_KEY", "Missing PRIVATE_KEY");
-const NOSTR_RELAYS = requiredEnv("NOSTR_RELAYS", "Missing NOSTR_RELAYS")?.split(",");
+const PRICE_PER_KIB = parseFloat(requiredEnv("PRICE_PER_KIB"));
+const PRIVATE_KEY_HEX = requiredEnv("PRIVATE_KEY");
+const NOSTR_RELAYS = requiredEnv("NOSTR_RELAYS")?.split(",");
 
-// Mint config
-const MINT_URL = requiredEnv("MINT_URL", "Missing MINT_URL");
+// Money config
+const MINT_URL = requiredEnv("MINT_URL");
 const MINT_UNIT = Deno.env.get("MINT_UNIT") ?? "sat";
+const PROFITS_PUBKEY = requiredEnv("PROFITS_PUBKEY");
+const PROFIT_PAYOUT_THRESHOLD = parseInt(Deno.env.get("PROFIT_PAYOUT_THRESHOLD") ?? "25");
 
 const UPSTREAM = Deno.env.get("UPSTREAM");
 
@@ -39,6 +42,8 @@ export {
   NOSTR_RELAYS,
   UPSTREAM,
   MINT_URL,
+  PROFITS_PUBKEY,
+  PROFIT_PAYOUT_THRESHOLD,
   I2P_PROXY,
   TOR_PROXY,
   PRICE_PER_KIB,

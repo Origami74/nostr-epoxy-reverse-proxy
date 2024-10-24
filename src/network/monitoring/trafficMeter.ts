@@ -3,7 +3,9 @@ import { Buffer } from "node:buffer";
 
 export interface ITrafficMeter {
   measureUpstream(data: string | Buffer | NodeJS.ArrayBufferView | ArrayBuffer | SharedArrayBuffer): boolean;
-  measureDownstream(data: string | Buffer | NodeJS.ArrayBufferView | ArrayBuffer | SharedArrayBuffer): boolean;
+  measureDownstream(
+    data: string | Buffer | NodeJS.ArrayBufferView | ArrayBuffer | SharedArrayBuffer | Buffer[],
+  ): boolean;
 
   set(value: number): void;
   getTotal(): number;
@@ -18,7 +20,11 @@ export class TrafficMeter {
   private countdownMeterKiB = 0;
 
   public measureUpstream(data: string | Buffer | NodeJS.ArrayBufferView | ArrayBuffer | SharedArrayBuffer): boolean {
-    const sizeKiB = Buffer.byteLength(data) * 1024;
+    if (!this.meterIsRunning()) {
+      return false;
+    }
+
+    const sizeKiB = Buffer.byteLength(data) / 1024;
     this.totalUpstreamKiB += sizeKiB;
     console.log(`Upstream measurement: ${sizeKiB}`);
     console.log(
@@ -30,7 +36,11 @@ export class TrafficMeter {
   }
 
   public measureDownstream(data: string | Buffer | NodeJS.ArrayBufferView | ArrayBuffer | SharedArrayBuffer): boolean {
-    const sizeKiB = Buffer.byteLength(data);
+    if (!this.meterIsRunning()) {
+      return false;
+    }
+
+    const sizeKiB = Buffer.byteLength(data) / 1024;
     this.totalDownstreamKiB += sizeKiB;
     console.log(`Downstream measurement: ${sizeKiB}`);
     console.log(

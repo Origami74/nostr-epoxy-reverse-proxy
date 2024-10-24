@@ -5,19 +5,18 @@ import { Wallet } from "./wallet.ts";
 import { EventPublisher } from "../eventPublisher.ts";
 import type { IEventPublisher } from "../eventPublisher.ts";
 import logger from "../logger.ts";
-import { Payment } from "../types/payment.ts";
-import { getAmount } from "../helpers/money.ts";
+import { getAmount, toCashuToken } from "../helpers/money.ts";
+import { PROFIT_PAYOUT_THRESHOLD, PROFITS_PUBKEY } from "../env.ts";
 
 export interface ICashRegister {
-  collectPayment(payment: Payment): Promise<number>;
+  collectPayment(proofs: Proof[]): Promise<number>;
 }
 
 @injectable()
 export class CashRegister implements ICashRegister {
   private log = logger.extend(`CashRegister`);
-  private profitsPubkey: string = getRequiredEnv("PROFITS_PUBKEY"); // TODO: set default
-  private profitsPayoutThreshold: number = Number(getRequiredEnv("PROFIT_PAYOUT_THRESHOLD")) ?? 0;
-  private profitPubkeyLockEnabled: boolean = getRequiredEnv("PROFITS_PUBKEY_LOCK") === "true";
+  private profitsPubkey: string = PROFITS_PUBKEY; // TODO: set default
+  private profitsPayoutThreshold: number = PROFIT_PAYOUT_THRESHOLD;
 
   private wallet: IWallet;
   private eventPublisher: IEventPublisher;
@@ -27,16 +26,16 @@ export class CashRegister implements ICashRegister {
     this.eventPublisher = eventPublisher;
   }
 
-  public async collectPayment(payment: Payment): Promise<number> {
+  public async collectPayment(proofs: Proof[]): Promise<number> {
     try {
-      const amountInWallet = await this.wallet.add(payment.proofs, payment.mint);
+      const amountInWallet = await this.wallet.add(proofs);
 
       // TODO: extract payout to background job
       if (amountInWallet >= this.profitsPayoutThreshold) {
         await this.payoutOwner();
       }
 
-      return getAmount(payment.proofs);
+      return getAmount(proofs);
     } catch (e) {
       console.error("Payment failed: Error redeeming cashu tokens", e);
       throw new Error("Payment failed");
@@ -44,10 +43,12 @@ export class CashRegister implements ICashRegister {
   }
 
   private async payoutOwner() {
-    const cashuToken = await this.wallet.takeAllAsCashuToken();
+    const nuts = await this.wallet.takeAll();
+
+    const cashuToken = toCashuToken(nuts, this.wallet.mintUrl);
 
     try {
-      this.eventPublisher.publishDM(
+      await this.eventPublisher.publishDM(
         this.profitsPubkey,
         `Here's your profits from your relay proxying service. At ${new Date().toUTCString()}.\n ${cashuToken}`,
       );
