@@ -7,7 +7,7 @@ import OutboundNetwork, { type IOutboundNetwork } from "./outbound.js";
 import logger from "../logger.js";
 import { CashRegister, type ICashRegister } from "../pricing/cashRegister.js";
 import { TrafficMeter, type ITrafficMeter } from "./monitoring/trafficMeter.js";
-import PubkeyResolver, { IPubkeyResolver } from "./pubkeyResolver.js";
+import PubkeyResolver, { type IPubkeyResolver } from "./pubkeyResolver.js";
 
 export interface ISwitchboard {
   handleConnection(source: WebSocket): void;

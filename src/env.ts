@@ -32,9 +32,9 @@ const I2P_PROXY = optionalEnv("I2P_PROXY");
 const TOR_PROXY = optionalEnv("TOR_PROXY");
 
 // Inbound network
-const CLEARNET_URL = optionalEnv("CLEARNET_URL");
-const TOR_URL = optionalEnv("TOR_URL");
-const I2P_URL = optionalEnv("I2P_URL");
+const INBOUND_CLEARNET = optionalEnv("INBOUND_CLEARNET");
+const INBOUND_TOR = optionalEnv("INBOUND_TOR");
+const INBOUND_I2P = optionalEnv("INBOUND_I2P");
 
 const PRIVATE_KEY = hexToBytes(PRIVATE_KEY_HEX);
 
@@ -55,7 +55,7 @@ export {
   SERVICE_NAME,
   SERVICE_PICTURE,
   MINT_UNIT,
-  CLEARNET_URL,
-  TOR_URL,
-  I2P_URL,
+  INBOUND_CLEARNET,
+  INBOUND_TOR,
+  INBOUND_I2P,
 };

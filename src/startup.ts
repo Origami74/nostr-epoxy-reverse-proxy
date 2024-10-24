@@ -1,13 +1,4 @@
 import { container } from "tsyringe";
-
-import { Wallet } from "./pricing/wallet.js";
-import { CashRegister } from "./pricing/cashRegister.js";
-import { RelayProvider } from "./relayProvider.js";
-import Switchboard, { type ISwitchboard } from "./network/switchboard.js";
-import OutboundNetwork from "./network/outbound.js";
-import PubkeyResolver from "./network/pubkeyResolver.js";
-import { EventPublisher } from "./eventPublisher.js";
-import { TrafficMeter } from "./network/monitoring/trafficMeter.js";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { ConsoleSpanExporter, SimpleSpanProcessor } from "@opentelemetry/sdk-trace-node";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
@@ -19,6 +10,16 @@ import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { envDetector, processDetector, Resource } from "@opentelemetry/resources";
 import { PrometheusExporter } from "@opentelemetry/exporter-prometheus";
 
+import { Wallet } from "./pricing/wallet.js";
+import { CashRegister } from "./pricing/cashRegister.js";
+import { RelayProvider } from "./relayProvider.js";
+import Switchboard, { type ISwitchboard } from "./network/switchboard.js";
+import OutboundNetwork from "./network/outbound.js";
+import PubkeyResolver from "./network/pubkeyResolver.js";
+import { EventPublisher } from "./eventPublisher.js";
+import { TrafficMeter } from "./network/monitoring/trafficMeter.js";
+import Gossip from "./network/gossip.js";
+
 export function startup() {
   console.info("Running startup");
 
@@ -26,6 +27,7 @@ export function startup() {
   container.registerSingleton(RelayProvider.name, RelayProvider);
   container.registerSingleton(Wallet.name, Wallet);
   container.registerSingleton(CashRegister.name, CashRegister);
+  container.registerSingleton(Gossip.name, Gossip);
 
   container.registerSingleton(OutboundNetwork.name, OutboundNetwork);
 
@@ -34,8 +36,10 @@ export function startup() {
   container.register(TrafficMeter.name, { useClass: TrafficMeter });
 
   console.info("All services registered");
-  container.resolve<ISwitchboard>(Switchboard.name);
+  const gossip = container.resolve<Gossip>(Gossip.name);
+
   setupOtel();
+  gossip.start();
 
   console.info("Startup completed");
 }
@@ -43,27 +47,26 @@ export function startup() {
 function setupOtel() {
   const prometheusExporter = new PrometheusExporter(
     {
+      // @ts-expect-error
       startServer: true,
-      port: 9090
+      port: 9090,
     },
     () => {
-      console.log("prometheus scrape endpoint: http://localhost:"
-        + "9090"
-        + "/metrics");
-    }
+      console.log("prometheus scrape endpoint: http://localhost:" + "9090" + "/metrics");
+    },
   );
 
   const otlpMetricExporter = new OTLPMetricExporter({
-    url: 'http://localhost:4317/v1/metrics',
+    url: "http://localhost:4317/v1/metrics",
   });
 
   const otlpMetricReader = new PeriodicExportingMetricReader({
     exporter: otlpMetricExporter,
-    exportIntervalMillis: 1000
+    exportIntervalMillis: 1000,
   });
 
   const logExporter = new OTLPLogExporter({
-    url: 'http://localhost:4317/v1/logs',
+    url: "http://localhost:4317/v1/logs",
   });
 
   const otlpLogProcessor = new BatchLogRecordProcessor(logExporter);
@@ -71,12 +74,10 @@ function setupOtel() {
   const sdk = new NodeSDK({
     resourceDetectors: [envDetector, processDetector],
     resource: new Resource({
-      [ ATTR_SERVICE_NAME ]: "nerp-otel",
+      [ATTR_SERVICE_NAME]: "nerp-otel",
     }),
 
-    instrumentations: [
-      getNodeAutoInstrumentations(),
-    ],
+    instrumentations: [getNodeAutoInstrumentations()],
     spanProcessors: [new SimpleSpanProcessor(new ConsoleSpanExporter())],
     metricReader: otlpMetricReader,
     logRecordProcessor: otlpLogProcessor,
@@ -84,18 +85,18 @@ function setupOtel() {
 
   sdk.start();
 
-  process.on('SIGTERM', () => {
-    sdk.shutdown()
-      .then(() => console.log('OpenTelemetry terminated'))
-      .catch((error) => console.log('Error terminating tracing', error))
+  process.on("SIGTERM", () => {
+    sdk
+      .shutdown()
+      .then(() => console.log("OpenTelemetry terminated"))
+      .catch((error) => console.log("Error terminating tracing", error))
       .finally(() => process.exit(0));
   });
 
-  const meterProvider = new MeterProvider({readers: [prometheusExporter]});
-  const meter = meterProvider
-    .getMeter("bla");
+  const meterProvider = new MeterProvider({ readers: [prometheusExporter] });
+  const meter = meterProvider.getMeter("bla");
 
-  const counter = meter.createCounter("my-loop", {description: "this is how many loops i did"})
+  const counter = meter.createCounter("my-loop", { description: "this is how many loops i did" });
 
   for (let i = 0; i < 100; i++) {
     counter.add(1);

@@ -9,28 +9,23 @@ import {
   SERVICE_ABOUT,
   SERVICE_PICTURE,
   SERVICE_NAME,
-  CLEARNET_URL,
-  TOR_URL,
-  I2P_URL,
   MINT_URL,
   PRICE_PER_KIB,
+  INBOUND_TOR,
+  INBOUND_I2P,
+  INBOUND_CLEARNET,
 } from "../env.js";
-import { PROXY_ADVERTIZEMENT_KIND } from "../const.js";
+import { PROXY_ADVERTIZEMENT_KIND, SELF_MONITOR_KIND } from "../const.js";
 import { RelayProvider, type IRelayProvider } from "../relayProvider.js";
 
-// function buildGossipTemplate(self: string, address: string, network: string) {
-//   return {
-//     kind: 30166,
-//     content: "",
-//     tags: [
-//       ["d", address],
-//       ["n", network],
-//       ["p", self],
-//       ["T", "Proxy"],
-//     ],
-//     created_at: unixNow(),
-//   };
-// }
+function livenessTags(self: string, address: string, network: string) {
+  return [
+    ["d", address],
+    ["n", network],
+    ["p", self],
+    ["T", "Proxy"],
+  ];
+}
 
 @injectable()
 export default class Gossip {
@@ -55,22 +50,23 @@ export default class Gossip {
   }
 
   async gossip() {
-    // if (this.network.tor.available && this.network.tor.address) {
-    //   console.log("Publishing tor gossip");
-    //   await this.pool.publish(
-    //     this.broadcastRelays,
-    //     await this.signer.signEvent(buildGossipTemplate(pubkey, this.network.tor.address, "tor")),
-    //   );
-    // }
-    // if (this.network.i2p.available && this.network.i2p.address) {
-    //   console.log("Publishing i2p gossip");
-    //   await this.pool.publish(
-    //     this.broadcastRelays,
-    //     await this.signer.signEvent(buildGossipTemplate(pubkey, this.network.i2p.address, "i2p")),
-    //   );
-    // }
-    // const tags: string[][] = []
-    // await this.publisher.publish(SELF_MONITOR_KIND, tags,'');
+    const pubkey = await this.publisher.getPubkey();
+
+    if (INBOUND_TOR) {
+      this.log("Published tor gossip");
+      await this.publisher.publish(SELF_MONITOR_KIND, livenessTags(pubkey, INBOUND_TOR, "tor"), "");
+    }
+    if (INBOUND_I2P) {
+      await this.publisher.publish(SELF_MONITOR_KIND, livenessTags(pubkey, INBOUND_I2P, "i2p"), "");
+      this.log("Published i2p gossip");
+    }
+    if (INBOUND_CLEARNET) {
+      await this.publisher.publish(SELF_MONITOR_KIND, livenessTags(pubkey, INBOUND_CLEARNET, "clearnet"), "");
+      this.log("Published clearnet gossip");
+    }
+
+    const tags: string[][] = [];
+    await this.publisher.publish(SELF_MONITOR_KIND, tags, "");
   }
 
   private getProfileJson() {
@@ -92,7 +88,7 @@ export default class Gossip {
         const metadata = JSON.parse((await current).content);
         Object.assign(profile, metadata);
       } catch (error) {
-        console.log("Failed to parse profile event", error, current);
+        this.log("Failed to parse profile event", error, current);
       }
     }
 
@@ -100,6 +96,8 @@ export default class Gossip {
 
     const content = JSON.stringify(profile);
     await this.publisher.publish(0, [], content);
+
+    this.log("Published profile");
   }
 
   async advertize() {
@@ -115,11 +113,13 @@ export default class Gossip {
     if (this.network.i2p) tags.push(["n", "i2p"]);
 
     // advertize inbound urls
-    if (CLEARNET_URL) tags.push(["url", CLEARNET_URL, "clearnet"]);
-    if (TOR_URL) tags.push(["url", TOR_URL, "tor"]);
-    if (I2P_URL) tags.push(["url", I2P_URL, "i2p"]);
+    if (INBOUND_CLEARNET) tags.push(["url", INBOUND_CLEARNET, "clearnet"]);
+    if (INBOUND_TOR) tags.push(["url", INBOUND_TOR, "tor"]);
+    if (INBOUND_I2P) tags.push(["url", INBOUND_I2P, "i2p"]);
 
     await this.publisher.publish(PROXY_ADVERTIZEMENT_KIND, tags, content);
+
+    this.log("Published advertizement");
   }
 
   private async update() {
@@ -135,13 +135,12 @@ export default class Gossip {
     this.running = true;
 
     await this.updateProfile();
-
-    console.log(`Starting gossip`);
-    setTimeout(this.update.bind(this), 5000);
+    await this.update();
+    this.log(`Started`);
   }
 
   stop() {
-    console.log("Stopping gossip");
+    this.log("Stopping gossip");
     this.running = false;
   }
 }
