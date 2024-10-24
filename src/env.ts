@@ -5,7 +5,7 @@ function requiredEnv(name: string, message: string) {
   return Deno.env.get(name)!;
 }
 
-const PRICE_PER_KIB = parseFloat(requiredEnv("PRICE", "Missing PRICE"));
+const PRICE_PER_KIB = parseFloat(requiredEnv("PRICE_PER_KIB", "Missing PRICE_PER_KIB"));
 const PRIVATE_KEY_HEX = requiredEnv("PRIVATE_KEY", "Missing PRIVATE_KEY");
 const NOSTR_RELAYS = requiredEnv("NOSTR_RELAYS", "Missing NOSTR_RELAYS")?.split(",");
 

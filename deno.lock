@@ -435,6 +435,7 @@
       "dependencies": [
         "npm:@cashu/cashu-ts@^1.1.0",
         "npm:@jsr/nostrify__nostrify@~0.36.1",
+        "npm:@noble/hashes@^1.5.0",
         "npm:@types/debug@^4.1.12",
         "npm:@types/ws@^8.5.12",
         "npm:debug@^4.3.7",
