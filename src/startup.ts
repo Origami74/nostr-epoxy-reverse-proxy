@@ -20,7 +20,7 @@ export function startup() {
   container.registerSingleton(OutboundNetwork.name, OutboundNetwork);
   container.register(PubkeyResolver.name, PubkeyResolver);
 
-  container.register(TrafficMeter.name, {useClass: TrafficMeter});
+  container.register(TrafficMeter.name, { useClass: TrafficMeter });
 
   console.info("All services registered");
   container.resolve<ISwitchboard>(Switchboard.name);

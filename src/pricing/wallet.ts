@@ -2,7 +2,7 @@ import { injectable } from "tsyringe";
 import { CashuMint, CashuWallet, Proof, getEncodedToken } from "@cashu/cashu-ts";
 
 import { MINT_URL, PRIVATE_KEY } from "../env.ts";
-import { CashuMint, CashuWallet, Proof  } from "@cashu/cashu-ts";
+import { CashuMint, CashuWallet, Proof } from "@cashu/cashu-ts";
 import { getRequiredEnv } from "../helpers/env.ts";
 import { toCashuToken } from "../helpers/money.ts";
 
@@ -34,8 +34,8 @@ export class Wallet implements IWallet {
 
     this.nutSack = this.nutSack.concat(redeemedProofs);
 
-    const receivedAmount = this.getAmount(proofs)
-    const nutSackAmount = this.getAmount(this.nutSack)
+    const receivedAmount = this.getAmount(proofs);
+    const nutSackAmount = this.getAmount(this.nutSack);
     console.log(`Received ${receivedAmount} sats, wallet now contains ${nutSackAmount} sats`);
 
     return nutSackAmount;
@@ -48,7 +48,7 @@ export class Wallet implements IWallet {
   public remove(proofsToRemove: Proof[]): number {
     this.nutSack = this.nutSack.filter((proof) => !proofsToRemove.includes(proof));
 
-    const removedAmount = this.getAmount(proofsToRemove)
+    const removedAmount = this.getAmount(proofsToRemove);
     const nutSackAmount = this.getAmount(this.nutSack);
     console.log(`Removed ${removedAmount} sats, wallet now contains ${nutSackAmount} sats`);
 

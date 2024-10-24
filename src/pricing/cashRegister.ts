@@ -31,7 +31,6 @@ export class CashRegister implements ICashRegister {
   public async collectPayment(payment: Payment): Promise<number> {
     try {
       const amountInWallet = await this.wallet.add(payment.proofs, payment.mint);
-      
 
       // TODO: extract payout to background job
       if (amountInWallet >= this.profitsPayoutThreshold) {
@@ -47,7 +46,6 @@ export class CashRegister implements ICashRegister {
 
   private async payoutOwner() {
     const cashuToken = await this.wallet.takeAllAsCashuToken();
-
 
     try {
       this.eventPublisher.publishDM(

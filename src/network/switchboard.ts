@@ -91,37 +91,34 @@ export default class Switchboard implements ISwitchboard {
         // handle "PROXY" message
         try {
           const message = JSON.parse(event.data) as string[];
-          if (!Array.isArray(message) || message[0] !== 'PEROXY') throw new Error("Broken proxy message");
-  
-          const targetUrl = message[1]
-          const payment: Payment = JSON.parse(message[2])
+          if (!Array.isArray(message) || message[0] !== "PEROXY") throw new Error("Broken proxy message");
+
+          const targetUrl = message[1];
+          const payment: Payment = JSON.parse(message[2]);
 
           // user is paying
-          if(payment){
+          if (payment) {
             const collectedAmount = await this.cashRegister.collectPayment(payment);
 
             // add allowance to the meter
-            this.trafficMeter.set(payment.)
+            // this.trafficMeter.set(payment.)
 
             // create upstream socket
-            const upstream = new CustomWebSocket(targetUrl, {agent: this.network.agent});
-            this.connectSocketToUpstream(source, upstream)
-          }
-          else {
+            const upstream = new CustomWebSocket(targetUrl, { agent: this.network.agent });
+            this.connectSocketToUpstream(source, upstream);
+          } else {
             // tell user they have to pay
-            source.send(JSON.stringify(["PROXY", 'PAYMENT_REQUIRED', 1000000]))
+            source.send(JSON.stringify(["PROXY", "PAYMENT_REQUIRED", 1000000]));
           }
         } catch (error) {
-          if(error instanceof Error) source.send(JSON.stringify(["PROXY", "ERROR", error.message]))
+          if (error instanceof Error) source.send(JSON.stringify(["PROXY", "ERROR", error.message]));
         }
-      }
-      else if(relay){
+      } else if (relay) {
         // there is a relay, either forward or buffer message
-        if(relay.readyState === WebSocket.CONNECTING){
+        if (relay.readyState === WebSocket.CONNECTING) {
           // upstream is connecting, buffer message
-          buffer.push(event.data)
-        }
-        else if(relay.readyState === WebSocket.OPEN){
+          buffer.push(event.data);
+        } else if (relay.readyState === WebSocket.OPEN) {
           // upstgream is connected, forward message
           relay.send(event.data);
         }
@@ -132,49 +129,47 @@ export default class Switchboard implements ISwitchboard {
     };
 
     // Relay listeners
-    let relayCleanup: (() => void)|undefined = undefined
-    if(relay){
+    let relayCleanup: (() => void) | undefined = undefined;
+    if (relay) {
       const handleRelayMessage = (event: CustomMessageEvent) => {
-        if(Array.isArray(event.data)){
-          source.send(Buffer.concat(event.data))
-        }
-        else source.send(event.data);
+        if (Array.isArray(event.data)) {
+          source.send(Buffer.concat(event.data));
+        } else source.send(event.data);
       };
       const handleRelayError = (err: CustomErrorEvent) => {
         this.log(`Connection error to ${relay.url}`, err);
         // close source socket because relay is unreachable
-        source.close()
+        source.close();
       };
       const handleRelayClose = () => {
-        if(source.readyState === WebSocket.OPEN) source.close();
-      }
+        if (source.readyState === WebSocket.OPEN) source.close();
+      };
       const handleRelayConnected = () => {
-        if(source.readyState !== WebSocket.OPEN){
+        if (source.readyState !== WebSocket.OPEN) {
           // close the relay connection if the source isn't open
-          relay.close()
-        }
-        else {
+          relay.close();
+        } else {
           // replay buffer
-          for (const data of buffer) relay.send(data)
-          buffer = []
+          for (const data of buffer) relay.send(data);
+          buffer = [];
         }
-      }
+      };
 
       // add listeners
-      relay.addEventListener('open', handleRelayConnected)
+      relay.addEventListener("open", handleRelayConnected);
       relay.addEventListener("message", handleRelayMessage);
       relay.addEventListener("close", handleRelayClose);
       relay.addEventListener("error", handleRelayError);
 
-      this.socketConnection.set(source, relay)
+      this.socketConnection.set(source, relay);
       relayCleanup = () => {
-        relay.removeEventListener('open', handleRelayConnected)
+        relay.removeEventListener("open", handleRelayConnected);
         relay.removeEventListener("message", handleRelayMessage);
         relay.removeEventListener("close", handleRelayClose);
         relay.removeEventListener("error", handleRelayError);
 
-        this.socketConnection.delete(source)
-      }
+        this.socketConnection.delete(source);
+      };
     }
 
     // Assign source listeners
@@ -185,53 +180,52 @@ export default class Switchboard implements ISwitchboard {
     this.socketCleanup.set(source, () => {
       source.removeEventListener("message", handleSourceMessage);
       source.removeEventListener("close", handleSourceClose);
-      
-      relayCleanup?.()
+
+      relayCleanup?.();
       relay?.close();
     });
   }
 
   // connects an incoming socket to a remote relay
-  connectSocketToUpstream(source: WebSocket, remote: CustomWebSocket){
+  connectSocketToUpstream(source: WebSocket, remote: CustomWebSocket) {
     // Disconnect any existing connections before binding new one
     this.socketCleanup.get(source)?.();
 
-    let dataSent = 0
-    let dataReceived = 0
+    let dataSent = 0;
+    let dataReceived = 0;
     let totalDataTransfer = () => dataSent + dataReceived;
 
     source.send(JSON.stringify(["PROXY", "CONNECTING"]));
 
     // Source listeners
     const handleSourceMessage = (event: MessageEvent) => {
-      this.trafficMeter.measureOut(event.data)
-      dataSent += Buffer.byteLength(event.data, 'utf-8');
+      this.trafficMeter.measureOut(event.data);
+      dataSent += Buffer.byteLength(event.data, "utf-8");
       console.log(`Sent: ${event.data}`);
       console.log(`Total Data Sent/Received in bytes: ${dataSent}/${dataReceived} total ${totalDataTransfer()}`);
 
       // send data to remote
-      if(remote.readyState === WebSocket.OPEN){
-        remote.send(event.data)
+      if (remote.readyState === WebSocket.OPEN) {
+        remote.send(event.data);
       }
-    }
+    };
 
     const handleSourceClose = () => {
-      if(remote.readyState === WebSocket.OPEN) remote.close()
-    }
+      if (remote.readyState === WebSocket.OPEN) remote.close();
+    };
 
     // Remote listeners
     const handleRemoteMessage = (event: CustomMessageEvent) => {
       // TODO: maybe also measure the data here?
-      if(Array.isArray(event.data)){
-        source.send(Buffer.concat(event.data))
+      if (Array.isArray(event.data)) {
+        source.send(Buffer.concat(event.data));
+      } else {
+        source.send(event.data);
       }
-      else {
-        source.send(event.data)
-      }
-    }
+    };
     const handleRemoteConnected = () => {
       source.send(JSON.stringify(["PROXY", "CONNECTED"]));
-    }
+    };
 
     const handleRemoteError = (err: CustomErrorEvent) => {
       this.log(`Connection error to ${remote.url}`, err);
@@ -239,32 +233,32 @@ export default class Switchboard implements ISwitchboard {
     };
     const handleRemoteClose = () => {
       // TODO: forward code and reason
-      if(source.readyState === WebSocket.OPEN) source.close()
-    }
+      if (source.readyState === WebSocket.OPEN) source.close();
+    };
 
-    source.addEventListener('message', handleSourceMessage)
-    source.addEventListener('close', handleSourceClose)
+    source.addEventListener("message", handleSourceMessage);
+    source.addEventListener("close", handleSourceClose);
 
     remote.addEventListener("open", handleRemoteConnected);
     remote.addEventListener("message", handleRemoteMessage);
     remote.addEventListener("error", handleRemoteError);
     remote.addEventListener("close", handleRemoteClose);
 
-    this.socketConnection.set(source, remote)
+    this.socketConnection.set(source, remote);
 
     // set cleanup
     this.socketCleanup.set(source, () => {
-      source.removeEventListener('message', handleSourceMessage)
-      source.removeEventListener('close', handleSourceClose)
+      source.removeEventListener("message", handleSourceMessage);
+      source.removeEventListener("close", handleSourceClose);
 
-      remote.removeEventListener('open', handleRemoteConnected)
+      remote.removeEventListener("open", handleRemoteConnected);
       remote.removeEventListener("error", handleRemoteError);
-      remote.removeEventListener('message', handleRemoteMessage)
-      remote.removeEventListener('close', handleRemoteClose)
+      remote.removeEventListener("message", handleRemoteMessage);
+      remote.removeEventListener("close", handleRemoteClose);
 
-      remote.close()
-      this.socketConnection.delete(source)
-    })
+      remote.close();
+      this.socketConnection.delete(source);
+    });
   }
 
   handleConnection(source: WebSocket) {
@@ -276,6 +270,6 @@ export default class Switchboard implements ISwitchboard {
     }
 
     // connect the source to the relay
-    this.connectSocketToRelay(source, relay)
+    this.connectSocketToRelay(source, relay);
   }
 }
