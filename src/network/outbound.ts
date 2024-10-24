@@ -49,6 +49,7 @@ export interface IOutboundNetwork {
   i2p: boolean;
   clearnet: boolean;
   agent: ProxyAgent | PacProxyAgent<string>;
+  filterAddresses(urls: string[]): string[];
 }
 
 @injectable()
@@ -67,5 +68,19 @@ export default class OutboundNetwork implements IOutboundNetwork {
 
       this.agent = new PacProxyAgent(buildPacURI(), { keepAlive: true });
     } else this.agent = new ProxyAgent({ keepAlive: true });
+  }
+
+  filterAddresses(urls: string[]) {
+    return urls.filter((str) => {
+      try {
+        const url = new URL(str);
+
+        if (!TOR_PROXY && url.hostname.endsWith(".onion")) return false;
+        if (!I2P_PROXY && url.hostname.endsWith(".i2p")) return false;
+      } catch (error) {
+        return false;
+      }
+      return true;
+    });
   }
 }
