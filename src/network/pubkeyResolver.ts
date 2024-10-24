@@ -1,23 +1,25 @@
-import { NPool, NRelay, NStore } from "@nostrify/nostrify";
 import { injectable, inject } from "tsyringe";
-import { unixNow } from "../helpers/date.ts";
 
-export interface IResolve {
+import { unixNow } from "../helpers/date.ts";
+import { RelayProvider, type IRelayProvider } from "../relayProvider.ts";
+
+export interface IPubkeyResolver {
   lookup(pubkey: string): Promise<string[]>;
 }
 
 @injectable()
-export default class Resolve implements IResolve {
+export default class PubkeyResolver implements IPubkeyResolver {
+  private relays: IRelayProvider;
   private lookups = new Map<string, number>();
-  private pool: Nool<NRelay>;
-  private store: NStore;
 
-  constructor(@inject("NPool") pool: NPool<NRelay>, @inject("NStore") store: NStore) {
-    this.pool = pool;
-    this.store = store;
+  constructor(@inject(RelayProvider.name) relays: IRelayProvider) {
+    this.relays = relays;
   }
 
   async lookup(pubkey: string) {
+    const pool = this.relays.getDefaultPool();
+    const cache = this.relays.cache;
+
     const last = this.lookups.get(pubkey);
 
     const filter = { authors: [pubkey], "#p": [pubkey], kinds: [30166] };
@@ -26,13 +28,13 @@ export default class Resolve implements IResolve {
     if (last === undefined || last > unixNow()) {
       this.lookups.set(pubkey, unixNow() + 60 * 60);
 
-      const events = await this.pool.query([filter]);
+      const events = await pool.query([filter]);
       for (const event of events) {
-        await this.store.event(event);
+        await cache.event(event);
       }
     }
 
-    const events = await this.store.query([filter]);
+    const events = await cache.query([filter]);
 
     const addresses: string[] = [];
     for (const event of events) {

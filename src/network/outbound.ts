@@ -3,10 +3,7 @@ import { PacProxyAgent } from "pac-proxy-agent";
 import { injectable } from "tsyringe";
 
 import logger from "../logger.ts";
-
-const I2P_PROXY = Deno.env.get("I2P_PROXY");
-const PAC_PROXY = Deno.env.get("PAC_PROXY");
-const TOR_PROXY = Deno.env.get("TOR_PROXY");
+import { I2P_PROXY, TOR_PROXY } from "../env.ts";
 
 function buildPacURI() {
   const statements: string[] = [];
@@ -47,16 +44,24 @@ ${statements.join("\n")}
   return "pac+data:application/x-ns-proxy-autoconfig;base64," + btoa(PACFile);
 }
 
+export interface IOutboundNetwork {
+  tor: boolean;
+  i2p: boolean;
+  clearnet: boolean;
+  agent: ProxyAgent | PacProxyAgent<string>;
+}
+
 @injectable()
-export default class OutboundNetwork {
-  log = logger.extend("OutboundNetwork");
+export default class OutboundNetwork implements IOutboundNetwork {
+  private log = logger.extend("OutboundNetwork");
   agent: ProxyAgent | PacProxyAgent<string>;
 
+  clearnet = true;
+  tor = !!TOR_PROXY;
+  i2p = !!I2P_PROXY;
+
   constructor() {
-    if (PAC_PROXY) {
-      this.log(`Using PAC proxy file`);
-      this.agent = new PacProxyAgent(PAC_PROXY, { keepAlive: true });
-    } else if (TOR_PROXY || I2P_PROXY) {
+    if (TOR_PROXY || I2P_PROXY) {
       if (TOR_PROXY) this.log("Tor connection enabled");
       if (I2P_PROXY) this.log("I2P connection enabled");
 

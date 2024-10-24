@@ -1,5 +1,6 @@
 import { injectable, inject } from "tsyringe";
 import { Proof } from "@cashu/cashu-ts";
+
 import type { IWallet } from "./wallet.ts";
 import { Wallet } from "./wallet.ts";
 import { EventPublisher } from "../eventPublisher.ts";
@@ -35,7 +36,7 @@ export class CashRegister implements ICashRegister {
       }
     } catch (e) {
       console.error("Payment failed: Error redeeming cashu tokens", e);
-      throw new Error('Payment failed')
+      throw new Error("Payment failed");
     }
   }
 

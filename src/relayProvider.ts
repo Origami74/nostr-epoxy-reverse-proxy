@@ -1,20 +1,24 @@
-import { inject, injectable } from "tsyringe";
+import { NRelay1, NPool, NStore, NCache, NostrFilter, NostrEvent } from "@nostrify/nostrify";
+import { injectable } from "tsyringe";
+
 import logger from "./logger.ts";
-import { NRelay1, NPool } from "@nostrify/nostrify";
+import { NOSTR_RELAYS } from "./env.ts";
 
 export interface IRelayProvider {
-  getDefaultPool(): NPool<NRelay1>;
+  getDefaultPool(): NStore;
+  getEvent(filter: NostrFilter, store?: NStore): Promise<NostrEvent | undefined>;
+  cache: NStore;
 }
 
 @injectable()
 export class RelayProvider implements IRelayProvider {
-  private logger = logger.extend(RelayProvider.name);
-  private pool: NPool<NRelay1>;
+  private log = logger.extend(RelayProvider.name);
+  private pool: NStore;
+
+  cache: NStore;
 
   constructor() {
-    this.logger = logger;
-
-    const relays = ["wss://nos.lol", "wss://relay.damus.io", "wss://relay.primal.net", "wss://relay.stens.dev"];
+    const relays = NOSTR_RELAYS; //["wss://nos.lol", "wss://relay.damus.io", "wss://relay.primal.net", "wss://relay.stens.dev"];
 
     this.pool = new NPool({
       open(url) {
@@ -31,9 +35,20 @@ export class RelayProvider implements IRelayProvider {
         return relays;
       },
     });
+
+    this.cache = new NCache({ max: 1000 });
   }
 
-  getDefaultPool(): NPool<NRelay1> {
+  /** Returns a single event from the cache or the relay pool */
+  async getEvent(filter: NostrFilter): Promise<NostrEvent | undefined> {
+    const cached = await this.cache.query([filter]);
+    if (cached[0]) return cached[0];
+
+    const events = await this.pool.query([filter]);
+    return events[0];
+  }
+
+  getDefaultPool(): NStore {
     return this.pool;
   }
 }

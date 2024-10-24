@@ -1,50 +1,55 @@
-import { container, inject, injectable } from "tsyringe";
+import { inject, injectable } from "tsyringe";
+import { NStore, NSecSigner } from "@nostrify/nostrify";
+
 import logger from "./logger.ts";
 import { unixNow } from "./helpers/date.ts";
 import { RelayProvider } from "./relayProvider.ts";
 import type { IRelayProvider } from "./relayProvider.ts";
-import { NRelay, NSecSigner } from "@nostrify/nostrify";
+import { PRIVATE_KEY } from "./env.ts";
 
 export interface IEventPublisher {
   publish(kind: number, tags: string[][], content: string): Promise<void>;
   publishDM(destPubKey: string, content: string): Promise<void>;
+  getPubkey(): Promise<string>;
 }
 
 @injectable()
 export class EventPublisher implements IEventPublisher {
-  private relay: NRelay;
-  private logger = logger.extend(EventPublisher.name);
+  private pool: NStore;
+  private cache: NStore;
+  private log = logger.extend(EventPublisher.name);
 
-  private privateKey: string;
   private signer: NSecSigner;
-  private signerPubkey: string;
+  pubkey?: string;
 
   constructor(@inject(RelayProvider.name) relayProvider: IRelayProvider) {
-    this.logger = logger;
-    this.relay = relayProvider.getDefaultPool();
+    this.pool = relayProvider.getDefaultPool();
+    this.cache = relayProvider.cache;
 
-    this.privateKey = getRequiredEnv("PRIVATE_KEY");
-    this.signer = new NSecSigner(this.privateKey);
-    this.signerPubkey = this.signer.getPublicKey();
+    this.signer = new NSecSigner(PRIVATE_KEY);
+  }
+
+  async getPubkey() {
+    if (this.pubkey) return this.pubkey;
+    return (this.pubkey = await this.signer.getPublicKey());
   }
 
   public async publish(kind: number, tags: string[][], content: string): Promise<void> {
-    var note = {
+    const note = {
       kind: kind,
-      pubkey: this.signerPubkey,
+      pubkey: await this.getPubkey(),
       content: content,
       created_at: unixNow(),
       tags: tags,
     };
-    const envt = await this.signer.signEvent(note);
+    const event = await this.signer.signEvent(note);
 
-    await this.relay.event(envt);
+    await this.cache.event(event);
+    await this.pool.event(event);
   }
 
   public async publishDM(destPubKey: string, content: string): Promise<void> {
-    const encryptedDmContent = await this.signer.nip04.encrypt(
-      destPubKey, content
-    );
+    const encryptedDmContent = await this.signer.nip04.encrypt(destPubKey, content);
 
     const privateMessage = {
       created_at: Math.floor(Date.now() / 1000),
@@ -53,10 +58,6 @@ export class EventPublisher implements IEventPublisher {
       content: encryptedDmContent,
     };
 
-    await this.publish(
-      4,
-      [["p", destPubKey]],
-      encryptedDmContent
-    );
+    await this.publish(4, [["p", destPubKey]], encryptedDmContent);
   }
 }
