@@ -8,6 +8,7 @@
     "npm:@types/debug@^4.1.12": "4.1.12",
     "npm:@types/ws@^8.5.12": "8.5.12",
     "npm:debug@^4.3.7": "4.3.7",
+    "npm:dotenv@^16.4.5": "16.4.5",
     "npm:measured-core@2": "2.0.0",
     "npm:pac-proxy-agent@^7.0.2": "7.0.2",
     "npm:prettier@^3.3.3": "3.3.3",
@@ -222,6 +223,9 @@
         "escodegen",
         "esprima"
       ]
+    },
+    "dotenv@16.4.5": {
+      "integrity": "sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg=="
     },
     "escodegen@2.1.0": {
       "integrity": "sha512-2NlIDTwUWJN0mRPQOdtQBzbUHvdGY2P1VXSyU83Q3xKxM7WHX2Ql8dKq782Q9TgQUNOLEzEYu9bzLNj1q88I5w==",

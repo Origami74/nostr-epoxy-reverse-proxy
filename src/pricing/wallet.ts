@@ -1,8 +1,9 @@
 import { injectable } from "tsyringe";
 import { CashuMint, CashuWallet, Proof } from "@cashu/cashu-ts";
+import { bytesToHex } from "@noble/hashes/utils";
+
 import { getAmount, toCashuToken } from "../helpers/money.ts";
 import { MINT_URL, PRIVATE_KEY } from "../env.ts";
-import { bytesToHex } from "@noble/hashes/utils";
 
 export interface IWallet {
   add(proofs: Proof[]): Promise<number>;

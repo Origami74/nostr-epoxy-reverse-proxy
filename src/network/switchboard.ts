@@ -1,11 +1,11 @@
 import { inject, injectable } from "tsyringe";
 import { WebSocket as CustomWebSocket, MessageEvent as CustomMessageEvent, ErrorEvent as CustomErrorEvent } from "ws";
+
 import { MINT_UNIT, MINT_URL, PRICE_PER_KIB, UPSTREAM } from "../env.ts";
 import OutboundNetwork, { type IOutboundNetwork } from "./outbound.ts";
 import logger from "../logger.ts";
 import { CashRegister, type ICashRegister } from "../pricing/cashRegister.ts";
 import { TrafficMeter, type ITrafficMeter } from "./monitoring/trafficMeter.ts";
-import type { Payment } from "../types/payment.ts";
 import { Proof } from "@cashu/cashu-ts";
 
 export interface ISwitchboard {
