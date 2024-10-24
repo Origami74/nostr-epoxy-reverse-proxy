@@ -8,12 +8,9 @@ import OutboundNetwork from "./network/outbound.ts";
 import PubkeyResolver from "./network/pubkeyResolver.ts";
 import { EventPublisher } from "./eventPublisher.ts";
 import { TrafficMeter } from "./network/monitoring/trafficMeter.ts";
-import logger from "./logger.ts";
 
 export function startup() {
   console.info("Running startup");
-
-
 
   container.registerSingleton(EventPublisher.name, EventPublisher);
   container.registerSingleton(RelayProvider.name, RelayProvider);

@@ -1,5 +1,5 @@
 import debug from "debug";
-import "./env.ts"
+import "./env.ts";
 
 // enable logging
 if (!debug.enabled("NERP")) {

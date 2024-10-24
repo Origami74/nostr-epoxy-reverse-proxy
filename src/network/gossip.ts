@@ -1,38 +1,36 @@
 import { inject, injectable } from "tsyringe";
 
-import { unixNow } from "../helpers/date.ts";
 import logger from "../logger.ts";
 import OutboundNetwork from "./outbound.ts";
 import { EventPublisher } from "../eventPublisher.ts";
 import type { IEventPublisher } from "../eventPublisher.ts";
 import {
   MINT_UNIT,
-  PRICE,
   SERVICE_ABOUT,
   SERVICE_PICTURE,
   SERVICE_NAME,
   CLEARNET_URL,
   TOR_URL,
-  I2P_PROXY,
   I2P_URL,
   MINT_URL,
+  PRICE_PER_KIB,
 } from "../env.ts";
-import { PROXY_ADVERTIZEMENT_KIND, SELF_MONITOR_KIND } from "../const.ts";
+import { PROXY_ADVERTIZEMENT_KIND } from "../const.ts";
 import { RelayProvider, type IRelayProvider } from "../relayProvider.ts";
 
-function buildGossipTemplate(self: string, address: string, network: string) {
-  return {
-    kind: 30166,
-    content: "",
-    tags: [
-      ["d", address],
-      ["n", network],
-      ["p", self],
-      ["T", "Proxy"],
-    ],
-    created_at: unixNow(),
-  };
-}
+// function buildGossipTemplate(self: string, address: string, network: string) {
+//   return {
+//     kind: 30166,
+//     content: "",
+//     tags: [
+//       ["d", address],
+//       ["n", network],
+//       ["p", self],
+//       ["T", "Proxy"],
+//     ],
+//     created_at: unixNow(),
+//   };
+// }
 
 @injectable()
 export default class Gossip {
@@ -87,13 +85,15 @@ export default class Gossip {
     const pubkey = await this.publisher.getPubkey();
     const current = await this.relays.getEvent({ kinds: [0], authors: [pubkey] });
 
-    let profile: Record<string, string> = {};
+    const profile: Record<string, string> = {};
 
     if (current) {
       try {
         const metadata = JSON.parse((await current).content);
         Object.assign(profile, metadata);
-      } catch (error) {}
+      } catch (error) {
+        console.log("Failed to parse profile event", error, current);
+      }
     }
 
     Object.assign(profile, this.getProfileJson());
@@ -106,7 +106,7 @@ export default class Gossip {
     const content = JSON.stringify(this.getProfileJson());
     const tags: string[][] = [];
 
-    tags.push(["price", String(PRICE), MINT_UNIT]);
+    tags.push(["price", String(PRICE_PER_KIB), MINT_UNIT]);
     tags.push(["mint", MINT_URL, MINT_UNIT]);
 
     // advertize outbound networks

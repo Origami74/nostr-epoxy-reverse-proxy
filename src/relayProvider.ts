@@ -18,12 +18,13 @@ export class RelayProvider implements IRelayProvider {
   cache: NStore;
 
   constructor() {
-    const relays = NOSTR_RELAYS; //["wss://nos.lol", "wss://relay.damus.io", "wss://relay.primal.net", "wss://relay.stens.dev"];
+    const relays = NOSTR_RELAYS;
 
     this.pool = new NPool({
       open(url) {
-        return new NRelay1(relays[0]);
+        return new NRelay1(url);
       },
+      // deno-lint-ignore require-await
       reqRouter: async (filters) => {
         return new Map(
           relays.map((relay) => {
@@ -31,7 +32,8 @@ export class RelayProvider implements IRelayProvider {
           }),
         );
       },
-      eventRouter: async (event) => {
+      // deno-lint-ignore require-await
+      eventRouter: async (_event) => {
         return relays;
       },
     });

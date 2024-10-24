@@ -51,13 +51,6 @@ export class EventPublisher implements IEventPublisher {
   public async publishDM(destPubKey: string, content: string): Promise<void> {
     const encryptedDmContent = await this.signer.nip04.encrypt(destPubKey, content);
 
-    const privateMessage = {
-      created_at: Math.floor(Date.now() / 1000),
-      kind: 4,
-      tags: [["p", destPubKey]],
-      content: encryptedDmContent,
-    };
-
     await this.publish(4, [["p", destPubKey]], encryptedDmContent);
   }
 }

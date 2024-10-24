@@ -37,6 +37,7 @@ export default class Switchboard implements ISwitchboard {
     // Disconnect any existing connections before binding new one
     this.socketCleanup.get(source)?.();
 
+    // deno-lint-ignore no-explicit-any
     let buffer: any[] = [];
 
     // Source listeners
