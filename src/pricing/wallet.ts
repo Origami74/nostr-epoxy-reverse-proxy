@@ -8,7 +8,6 @@ import { MINT_URL, PRIVATE_KEY } from "../env.js";
 export interface IWallet {
   add(proofs: Proof[]): Promise<number>;
   withdrawAll(pubkey?: string): Promise<Proof[]>;
-  remove(proofs: Proof[]): number;
 
   mintUrl: string;
 }
@@ -42,25 +41,15 @@ export class Wallet implements IWallet {
   }
 
   /**
-   * Removes proofs from wallet
-   * Returns total amount in wallet
-   */
-  public remove(proofsToRemove: Proof[]): number {
-    this.nutSack = this.nutSack.filter((proof) => !proofsToRemove.includes(proof));
-
-    const removedAmount = getAmount(proofsToRemove);
-    const nutSackAmount = getAmount(this.nutSack);
-    console.log(`Removed ${removedAmount} sats, wallet now contains ${nutSackAmount} sats`);
-
-    return nutSackAmount;
-  }
-
-  /**
    * If a pubkey is passed, the tokens will be locked to that pubkey.
    */
   public async withdrawAll(pubkey: string | undefined): Promise<Proof[]> {
     const nuts = this.nutSack;
-    this.remove(nuts);
+    this.nutSack = [];
+
+    const removedAmount = getAmount(nuts);
+    const nutSackAmount = getAmount(this.nutSack);
+    console.log(`Removed ${removedAmount} sats, wallet now contains ${nutSackAmount} sats`);
 
     // if (pubkey) {
     //   return await this.cashuWallet.receiveTokenEntry(
