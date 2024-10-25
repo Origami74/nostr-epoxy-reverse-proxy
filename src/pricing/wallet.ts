@@ -7,8 +7,7 @@ import { MINT_URL, PRIVATE_KEY } from "../env.js";
 
 export interface IWallet {
   add(proofs: Proof[]): Promise<number>;
-  takeAll(pubkey?: string): Promise<Proof[]>;
-  takeAllAsCashuToken(pubkey?: string): Promise<string>;
+  withdrawAll(pubkey?: string): Promise<Proof[]>;
   remove(proofs: Proof[]): number;
 
   mintUrl: string;
@@ -28,12 +27,12 @@ export class Wallet implements IWallet {
    * Returns total amount in wallet
    */
   public async add(proofs: Proof[]): Promise<number> {
-    const redeemedProofs = await this.cashuWallet.receiveTokenEntry(
-      { proofs: proofs, mint: this.mintUrl },
+    const received = await this.cashuWallet.receiveTokenEntry(
+      { proofs, mint: this.mintUrl },
       { privkey: this.relayPrivateKey },
     );
 
-    this.nutSack = this.nutSack.concat(redeemedProofs);
+    this.nutSack = [...this.nutSack, ...received];
 
     const receivedAmount = getAmount(proofs);
     const nutSackAmount = getAmount(this.nutSack);
@@ -59,26 +58,20 @@ export class Wallet implements IWallet {
   /**
    * If a pubkey is passed, the tokens will be locked to that pubkey.
    */
-  public async takeAll(pubkey: string | undefined): Promise<Proof[]> {
-    if (pubkey) {
-      return await this.cashuWallet.receiveTokenEntry(
-        { proofs: this.nutSack, mint: this.mintUrl },
-        { privkey: this.relayPrivateKey, pubkey: `02${pubkey}` },
-      );
-    } else {
-      return await this.cashuWallet.receiveTokenEntry(
-        { proofs: this.nutSack, mint: this.mintUrl },
-        { privkey: this.relayPrivateKey },
-      );
-    }
-  }
+  public async withdrawAll(pubkey: string | undefined): Promise<Proof[]> {
+    const nuts = this.nutSack;
+    this.remove(nuts);
 
-  /**
-   * If a pubkey is passed, the tokens will be locked to that pubkey.
-   */
-  public async takeAllAsCashuToken(pubkey: string | undefined): Promise<string> {
-    const nuts = await this.takeAll(pubkey);
-
-    return toCashuToken(nuts, this.mintUrl);
+    // if (pubkey) {
+    //   return await this.cashuWallet.receiveTokenEntry(
+    //     { proofs: nuts, mint: this.mintUrl },
+    //     { privkey: this.relayPrivateKey, pubkey: `02${pubkey}` },
+    //   );
+    // } else {
+    return await this.cashuWallet.receiveTokenEntry(
+      { proofs: nuts, mint: this.mintUrl },
+      { privkey: this.relayPrivateKey },
+    );
+    // }
   }
 }

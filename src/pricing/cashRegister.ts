@@ -44,7 +44,7 @@ export class CashRegister implements ICashRegister {
   }
 
   private async payoutOwner() {
-    const nuts = await this.wallet.takeAll();
+    const nuts = await this.wallet.withdrawAll();
 
     const cashuToken = toCashuToken(nuts, this.wallet.mintUrl);
 
@@ -55,9 +55,9 @@ export class CashRegister implements ICashRegister {
       );
     } catch (e) {
       console.error("Failed to forward payment in dm", e);
-    }
 
-    // We can safely remove deez nuts after sending it to the profits pubkey
-    this.wallet.remove(nuts);
+      // NOTE: this will not work if the nuts are locked to the profitsPubkey
+      await this.wallet.add(nuts);
+    }
   }
 }
