@@ -182,6 +182,7 @@ export default class Switchboard implements ISwitchboard {
       const meterRunning = this.trafficMeter.measureUpstream(event.data);
 
       if (!meterRunning) {
+        this.log("Source went bankrupt, closing connection.")
         source.close(1000, "Connection bankrupted");
         remote.close(); // TODO: Cleanup
         return;
@@ -202,6 +203,7 @@ export default class Switchboard implements ISwitchboard {
       const meterRunning = this.trafficMeter.measureDownstream(event.data);
 
       if (!meterRunning) {
+        this.log("Source went bankrupt, closing connection.")
         source.close(1000, "Connection bankrupted");
         remote.close(); // TODO: Cleanup
         return;
