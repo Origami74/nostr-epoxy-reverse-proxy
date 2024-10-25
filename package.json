@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "build/index.js",
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",
