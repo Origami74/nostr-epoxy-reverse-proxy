@@ -19,9 +19,9 @@ export default class Payout {
     this.cashRegister = cashRegister;
   }
 
-  async payout() {
+  async payout(ignoreThreshold: boolean = false) {
     this.log("Operator payout - Starting");
-    await this.cashRegister.payoutOwner();
+    await this.cashRegister.payoutOwner(ignoreThreshold);
     this.log("Operator payout - Done");
   }
 
@@ -40,8 +40,9 @@ export default class Payout {
     this.log(`Started`);
   }
 
-  stop() {
+  async stop() {
     this.log("Stopping payout");
     this.running = false;
+    await this.payout(true);
   }
 }

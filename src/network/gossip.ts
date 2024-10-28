@@ -5,7 +5,7 @@ import OutboundNetwork from "./outbound.js";
 import { EventPublisher } from "../eventPublisher.js";
 import type { IEventPublisher } from "../eventPublisher.js";
 import {
-  MINT_UNIT,
+  PRICE_UNIT,
   SERVICE_ABOUT,
   SERVICE_PICTURE,
   SERVICE_NAME,
@@ -104,8 +104,8 @@ export default class Gossip {
     const content = JSON.stringify(this.getProfileJson());
     const tags: string[][] = [];
 
-    tags.push(["price", String(PRICE_PER_KIB), MINT_UNIT]);
-    tags.push(["mint", MINT_URL, MINT_UNIT]);
+    tags.push(["price", String(PRICE_PER_KIB), PRICE_UNIT]);
+    tags.push(["mint", MINT_URL, PRICE_UNIT]);
 
     // advertize outbound networks
     if (this.network.clearnet) tags.push(["n", "clearnet"]);

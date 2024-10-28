@@ -11,12 +11,12 @@ function optionalEnv(name: string) {
 }
 
 const PRICE_PER_KIB = parseFloat(requiredEnv("PRICE_PER_KIB"));
+const PRICE_UNIT = optionalEnv("PRICE_UNIT") ?? "sat";
 const PRIVATE_KEY_HEX = requiredEnv("PRIVATE_KEY");
 const NOSTR_RELAYS = requiredEnv("NOSTR_RELAYS")?.split(",");
 
 // Money config
 const MINT_URL = requiredEnv("MINT_URL");
-const MINT_UNIT = optionalEnv("MINT_UNIT") ?? "sat";
 const PROFITS_PUBKEY = requiredEnv("PROFITS_PUBKEY");
 const PROFIT_PAYOUT_INTERVAL_SECONDS = parseInt(optionalEnv("PROFIT_PAYOUT_INTERVAL_SECONDS") ?? "600");
 const PROFIT_PAYOUT_THRESHOLD = parseInt(optionalEnv("PROFIT_PAYOUT_THRESHOLD") ?? "25");
@@ -53,10 +53,10 @@ export {
   I2P_PROXY,
   TOR_PROXY,
   PRICE_PER_KIB,
+  PRICE_UNIT,
   SERVICE_ABOUT,
   SERVICE_NAME,
   SERVICE_PICTURE,
-  MINT_UNIT,
   INBOUND_CLEARNET,
   INBOUND_TOR,
   INBOUND_I2P,

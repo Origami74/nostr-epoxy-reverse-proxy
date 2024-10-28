@@ -2,7 +2,7 @@ import { inject, injectable } from "tsyringe";
 import { WebSocket, MessageEvent, ErrorEvent as CustomErrorEvent } from "ws";
 import { Proof } from "@cashu/cashu-ts";
 
-import { MINT_UNIT, MINT_URL, PRICE_PER_KIB, UPSTREAM } from "../env.js";
+import { PRICE_UNIT, MINT_URL, PRICE_PER_KIB, UPSTREAM } from "../env.js";
 import OutboundNetwork, { type IOutboundNetwork } from "./outbound.js";
 import logger from "../logger.js";
 import { CashRegister, type ICashRegister } from "../pricing/cashRegister.js";
@@ -53,6 +53,17 @@ export default class Switchboard implements ISwitchboard {
           if (!Array.isArray(message) || message[0] !== "PROXY") throw new Error("Broken proxy message");
 
           let targetUrl = message[1];
+
+          // resolve pubkey
+          if (targetUrl.match(/[0-9a-f]{64}/)) {
+            const pubkey = targetUrl;
+            const addresses = await this.resolve.lookup(pubkey);
+
+            // TODO: add fallback logic
+            targetUrl = this.network.filterAddresses(addresses)[0];
+            if (!targetUrl) throw new Error("Failed to find good address for pubkey");
+          }
+
           const paymentProofs = message[2] as undefined | Proof[];
 
           // customer is paying
@@ -62,16 +73,6 @@ export default class Switchboard implements ISwitchboard {
             // Set the traffic meter
             const allowanceInKiB = collectedAmount / PRICE_PER_KIB;
             this.trafficMeter.set(allowanceInKiB);
-
-            // resolve pubkey
-            if (targetUrl.match(/[0-9a-f]{64}/)) {
-              const pubkey = targetUrl;
-              const addresses = await this.resolve.lookup(pubkey);
-
-              // TODO: add fallback logic
-              targetUrl = this.network.filterAddresses(addresses)[0];
-              if (!targetUrl) throw new Error("Failed to find good address for pubkey");
-            }
 
             // create upstream socket
             const upstream = new WebSocket(targetUrl, { agent: this.network.agent });
@@ -87,7 +88,7 @@ export default class Switchboard implements ISwitchboard {
                 {
                   price: PRICE_PER_KIB,
                   mint: MINT_URL,
-                  unit: MINT_UNIT,
+                  unit: PRICE_UNIT,
                 },
               ]),
             );

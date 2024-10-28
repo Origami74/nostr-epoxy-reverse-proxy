@@ -47,6 +47,11 @@ export function startup() {
   gossip.start();
   payout.start();
 
+  process.on("SIGTERM", async () => {
+    gossip.stop()
+    await payout.stop()
+  });
+
   console.info("Startup completed");
 }
 

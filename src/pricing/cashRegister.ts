@@ -11,7 +11,7 @@ import { PROFIT_PAYOUT_THRESHOLD, PROFITS_PUBKEY } from "../env.js";
 
 export interface ICashRegister {
   collectPayment(proofs: Proof[]): Promise<number>;
-  payoutOwner(): Promise<void>;
+  payoutOwner(ignoreThreshold: boolean): Promise<void>;
 }
 
 @injectable()
@@ -38,9 +38,9 @@ export class CashRegister implements ICashRegister {
     }
   }
 
-  public async payoutOwner() {
+  public async payoutOwner(ignoreThreshold: boolean = false) {
     const balance = this.wallet.getBalance()
-    if(balance < this.profitsPayoutThreshold){
+    if(!ignoreThreshold && balance < this.profitsPayoutThreshold){
       this.log(`Balance of ${balance} not enough for payout threshold of ${this.profitsPayoutThreshold}, skipping payout...`)
       return;
     }
