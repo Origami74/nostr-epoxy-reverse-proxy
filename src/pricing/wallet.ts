@@ -8,7 +8,8 @@ import { MINT_URL, PRIVATE_KEY } from "../env.js";
 export interface IWallet {
   add(proofs: Proof[]): Promise<number>;
   withdrawAll(pubkey?: string): Promise<Proof[]>;
-
+  getBalance(): number;
+  
   mintUrl: string;
 }
 
@@ -51,16 +52,11 @@ export class Wallet implements IWallet {
     const nutSackAmount = getAmount(this.nutSack);
     console.log(`Removed ${removedAmount} sats, wallet now contains ${nutSackAmount} sats`);
 
-    // if (pubkey) {
-    //   return await this.cashuWallet.receiveTokenEntry(
-    //     { proofs: nuts, mint: this.mintUrl },
-    //     { privkey: this.relayPrivateKey, pubkey: `02${pubkey}` },
-    //   );
-    // } else {
     return await this.cashuWallet.receiveTokenEntry(
       { proofs: nuts, mint: this.mintUrl },
       { privkey: this.relayPrivateKey },
     );
-    // }
   }
+
+  public getBalance = (): number => getAmount(this.nutSack);
 }

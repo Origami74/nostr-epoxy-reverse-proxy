@@ -4,6 +4,9 @@
   "description": "",
   "type": "module",
   "main": "build/index.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",

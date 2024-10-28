@@ -19,6 +19,7 @@ import PubkeyResolver from "./network/pubkeyResolver.js";
 import { EventPublisher } from "./eventPublisher.js";
 import { TrafficMeter } from "./network/monitoring/trafficMeter.js";
 import Gossip from "./network/gossip.js";
+import Payout from "./pricing/payout.js";
 
 export function startup() {
   console.info("Running startup");
@@ -27,19 +28,24 @@ export function startup() {
   container.registerSingleton(RelayProvider.name, RelayProvider);
   container.registerSingleton(Wallet.name, Wallet);
   container.registerSingleton(CashRegister.name, CashRegister);
-  container.registerSingleton(Gossip.name, Gossip);
-
   container.registerSingleton(OutboundNetwork.name, OutboundNetwork);
 
   container.register(Switchboard.name, { useClass: Switchboard });
   container.register(PubkeyResolver.name, { useClass: PubkeyResolver });
   container.register(TrafficMeter.name, { useClass: TrafficMeter });
 
+  // Background Services
+  container.registerSingleton(Gossip.name, Gossip);
+  container.registerSingleton(Payout.name, Payout);
+
   console.info("All services registered");
   const gossip = container.resolve<Gossip>(Gossip.name);
+  const payout = container.resolve<Payout>(Payout.name);
 
   setupOtel();
+
   gossip.start();
+  payout.start();
 
   console.info("Startup completed");
 }

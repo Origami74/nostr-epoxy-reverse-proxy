@@ -18,6 +18,7 @@ const NOSTR_RELAYS = requiredEnv("NOSTR_RELAYS")?.split(",");
 const MINT_URL = requiredEnv("MINT_URL");
 const MINT_UNIT = optionalEnv("MINT_UNIT") ?? "sat";
 const PROFITS_PUBKEY = requiredEnv("PROFITS_PUBKEY");
+const PROFIT_PAYOUT_INTERVAL_SECONDS = parseInt(optionalEnv("PROFIT_PAYOUT_INTERVAL_SECONDS") ?? "600");
 const PROFIT_PAYOUT_THRESHOLD = parseInt(optionalEnv("PROFIT_PAYOUT_THRESHOLD") ?? "25");
 
 const UPSTREAM = optionalEnv("UPSTREAM");
@@ -47,6 +48,7 @@ export {
   UPSTREAM,
   MINT_URL,
   PROFITS_PUBKEY,
+  PROFIT_PAYOUT_INTERVAL_SECONDS,
   PROFIT_PAYOUT_THRESHOLD,
   I2P_PROXY,
   TOR_PROXY,

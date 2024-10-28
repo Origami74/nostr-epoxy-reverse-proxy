@@ -11,6 +11,7 @@ import { PROFIT_PAYOUT_THRESHOLD, PROFITS_PUBKEY } from "../env.js";
 
 export interface ICashRegister {
   collectPayment(proofs: Proof[]): Promise<number>;
+  payoutOwner(): Promise<void>;
 }
 
 @injectable()
@@ -29,13 +30,7 @@ export class CashRegister implements ICashRegister {
 
   public async collectPayment(proofs: Proof[]): Promise<number> {
     try {
-      const amountInWallet = await this.wallet.add(proofs);
-
-      // TODO: extract payout to background job
-      if (amountInWallet >= this.profitsPayoutThreshold) {
-        await this.payoutOwner();
-      }
-
+      await this.wallet.add(proofs);
       return getAmount(proofs);
     } catch (e) {
       console.error("Payment failed: Error redeeming cashu tokens", e);
@@ -43,12 +38,17 @@ export class CashRegister implements ICashRegister {
     }
   }
 
-  private async payoutOwner() {
+  public async payoutOwner() {
+    const balance = this.wallet.getBalance()
+    if(balance < this.profitsPayoutThreshold){
+      this.log(`Balance of ${balance} not enough for payout threshold of ${this.profitsPayoutThreshold}, skipping payout...`)
+      return;
+    }
+
     const nuts = await this.wallet.withdrawAll();
 
-    const cashuToken = toCashuToken(nuts, this.wallet.mintUrl);
-
     try {
+      const cashuToken = toCashuToken(nuts, this.wallet.mintUrl);
       await this.eventPublisher.publishDM(
         this.profitsPubkey,
         `Here's your profits from your relay proxying service. At ${new Date().toUTCString()}.\n ${cashuToken}`,
