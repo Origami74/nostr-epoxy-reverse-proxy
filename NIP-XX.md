@@ -105,7 +105,7 @@ If the proxy implementation requires a payment or authentication it will respond
 
 ### Resolving Pubkeys
 
-Both Client and Proxy can use kind `18909` announcements to resolve pubkeys to url's.
+Both Client and Proxy use kind `18909` announcements to resolve pubkeys to url's.
 
 ### Error handling
 
