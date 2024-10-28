@@ -16,7 +16,7 @@ export interface ICashRegister {
 @injectable()
 export class CashRegister implements ICashRegister {
   private log = logger.extend(`CashRegister`);
-  private profitsPubkey: string = PROFITS_PUBKEY; // TODO: set default
+  private profitsPubkey: string = PROFITS_PUBKEY;
   private profitsPayoutThreshold: number = PROFIT_PAYOUT_THRESHOLD;
 
   private wallet: IWallet;

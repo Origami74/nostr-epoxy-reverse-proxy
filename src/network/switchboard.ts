@@ -184,7 +184,7 @@ export default class Switchboard implements ISwitchboard {
       if (!meterRunning) {
         if (source.readyState !== WebSocket.OPEN) return;
         this.log("Source went bankrupt, closing connection.");
-        source.close(1000, "Connection bankrupted");
+        source.close(1000, "PROXY, Connection bankrupted");
         remote.close(); // TODO: Cleanup
         return;
       }
@@ -206,7 +206,7 @@ export default class Switchboard implements ISwitchboard {
       if (!meterRunning) {
         if (source.readyState !== WebSocket.OPEN) return;
         this.log("Source went bankrupt, closing connection.");
-        source.close(1000, "Connection bankrupted");
+        source.close(1000, "PROXY, Connection bankrupted");
         remote.close(); // TODO: Cleanup
         return;
       }
