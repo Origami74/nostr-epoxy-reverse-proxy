@@ -44,7 +44,7 @@ tag `url` for url, at least one for every `n` tag.
 
 tag `mint` for mints, one or more.
 
-tag `price` for price per KiB, followed by `unit` for price unit, at least one.
+tag `price` for price per KiB, followed by `unit` for price unit.
 
 #### Example:
 
@@ -84,17 +84,24 @@ If the proxy implementation requires a payment or authentication it will respond
 - `["PROXY", "AUTH_REQUIRED", "<challenge_string>"]`
 
 
+`<challenge_string>` is a string that the client needs to add to a kind `22242` relay auth event and add to their `PROXY` request.
+
 `<pricing_info>` is an object in the following format:
 
 ```json
 {
   "price": "<price_per_kib>",
-  "mint": "<mint_url>",
-  "unit": "<mint_unit>"
+  "unit": "<price_unit>",
+  "mints": ["<mint_url_1>", "<mint_url_2>", "..."],
+  "top_up": "<nut-18-payment-request>"
 }
 ```
 
-`<challenge_string>` is a string that the client needs to add to a kind `22242` relay auth event and add to their `PROXY` request.
+- `<mint_url_x>` URL of the mint, this must be a mint of the same `<price_unit>`
+- `<price_per_kib>` Price per KiB.
+- `<price_unit>` Accepted payment unit.
+- `<top_up>` is an `optional` re-usable [NUT-18](https://github.com/cashubtc/nuts/blob/main/18.md) payment request that a client can pay to top-up their KiB's.
+
 
 ### Resolving Pubkeys
 
