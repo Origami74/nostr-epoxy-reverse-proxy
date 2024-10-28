@@ -16,8 +16,8 @@ A client may want to connect to a relay that is not directly accessible from the
 
 ### Request definition
 ```json
-["PROXY", "<proxy_url>", "<cashu_token>"]
-["PROXY", "<proxy_pubkey>", "<cashu_token>"]
+["PROXY", "<proxy_url>", "<auth_response>"]
+["PROXY", "<proxy_pubkey>", "<auth_response>"]
 ```
 
 The arguments are the `PROXY` keyword first and second can be:
@@ -25,7 +25,10 @@ The arguments are the `PROXY` keyword first and second can be:
 - `<proxy_url>` A relay address
 - `<proxy_pubkey>` A public key of proxy or relay in hex format
 
-The third argument `<cashu_token>` is an optional payment in the form of a cashu token.
+The third argument is an optional `<auth_response>` argument which can be
+
+- a `<cashu_token>` with proofs for payment.
+- a `<challenge_response>` a kind `22242` challenge response event as defined in [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md).
 
 WARNING:
 If requests are not encrypted to a pubkey of the destination, the proxy server can send the traffic anywhere without the client being aware.
@@ -54,17 +57,19 @@ tag `price` for price per KiB, followed by `unit` for price unit, at least one.
     [
       ["n", "tor"],
       ["n", "clearnet"],
-      ["url", "http://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion/", "tor"],
+      ["url", "https://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion/", "tor"],
       ["url", "wss://proxy.domain.com", "clearnet"],
       ["mint", "https://some.mint.xyz", "sat"],
       ["price", "0.01", "sat"]
     ]
   ],
-  "content": "See below"
+  "content": "<See below>"
 }
 ```
 
 **Example Content:**
+
+[NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md#kinds) user metadata content:
 ```json
 {
   "name": "Name of this Proxy",
@@ -75,7 +80,23 @@ tag `price` for price per KiB, followed by `unit` for price unit, at least one.
 
 ### Authorization
 
-The client can authenticate to the proxy in one of two ways. It can send a cashu payment as described in [Client implementation](#client-implementation), or it can authenticate itself using [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md).
+If the proxy implementation requires a payment or authentication it will respond to the `PROXY` request with one or both of the following options for authentication:
+
+- `["PROXY", "PAYMENT_REQUIRED", <pricing_info>]`
+- `["PROXY", "AUTH_REQUIRED", "<challenge_string>"]`
+
+
+`<pricing_info>` is an object in the following format:
+
+```json
+{
+  "price": "<price_per_kib>",
+  "mint": "<mint_url>",
+  "unit": "<mint_unit>"
+}
+```
+
+`<challenge_string>` is a string that the client needs to add to a kind `22242` relay auth event and add to their `PROXY` request.
 
 ### Resolving Pubkeys
 
