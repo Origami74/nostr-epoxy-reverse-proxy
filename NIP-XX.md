@@ -15,10 +15,8 @@ A client may want to connect to a relay that is not directly accessible from the
 ## Client implementation
 
 ### Request definition
-```json
-["PROXY", "<proxy_url>", "<auth_response>"]
-["PROXY", "<proxy_pubkey>", "<auth_response>"]
-```
+- `["PROXY", "<proxy_url>", "<auth_response>"]`
+- `["PROXY", "<proxy_pubkey>", "<auth_response>"]`
 
 The arguments are the `PROXY` keyword first and second can be:
 
@@ -27,7 +25,7 @@ The arguments are the `PROXY` keyword first and second can be:
 
 The third argument is an optional `<auth_response>` argument which can be
 
-- a `<cashu_token>` with proofs for payment.
+- a `<cashu_token>` containing cashu token.
 - a `<challenge_response>` a kind `22242` challenge response event as defined in [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md).
 
 WARNING:
