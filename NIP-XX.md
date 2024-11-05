@@ -92,12 +92,12 @@ If the proxy implementation requires a payment or authentication it will respond
 {
   "price": "<price_per_min>",
   "unit": "<price_unit>",
-  "mints": ["<mint_url_1>", "<mint_url_2>", "..."],
+  "mint": "<mint_url>",
   "top_up": "<nut-18-payment-request>"
 }
 ```
 
-- `<mint_url_x>` URL of the mint, this must be a mint of the same `<price_unit>`
+- `<mint_url>` URL of the mint, this must be a mint of the same `<price_unit>`
 - `<price_per_min>` Price per Minute.
 - `<price_unit>` Accepted payment unit.
 - `<top_up>` is an `optional` re-usable [NUT-18](https://github.com/cashubtc/nuts/blob/main/18.md) payment request that a client can pay to top-up their minutes.
