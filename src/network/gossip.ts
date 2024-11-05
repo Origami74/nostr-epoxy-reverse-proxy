@@ -10,7 +10,7 @@ import {
   SERVICE_PICTURE,
   SERVICE_NAME,
   MINT_URL,
-  PRICE_PER_KIB,
+  PRICE_PER_MIN,
   INBOUND_TOR,
   INBOUND_I2P,
   INBOUND_CLEARNET,
@@ -104,7 +104,7 @@ export default class Gossip {
     const content = JSON.stringify(this.getProfileJson());
     const tags: string[][] = [];
 
-    tags.push(["price", String(PRICE_PER_KIB), PRICE_UNIT]);
+    tags.push(["price", String(PRICE_PER_MIN), PRICE_UNIT]);
     tags.push(["mint", MINT_URL, PRICE_UNIT]);
 
     // advertize outbound networks

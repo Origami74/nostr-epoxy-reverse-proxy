@@ -17,7 +17,6 @@ import Switchboard, { type ISwitchboard } from "./network/switchboard.js";
 import OutboundNetwork from "./network/outbound.js";
 import PubkeyResolver from "./network/pubkeyResolver.js";
 import { EventPublisher } from "./eventPublisher.js";
-import { TrafficMeter } from "./network/monitoring/trafficMeter.js";
 import Gossip from "./network/gossip.js";
 import Payout from "./pricing/payout.js";
 
@@ -32,7 +31,6 @@ export function startup() {
 
   container.register(Switchboard.name, { useClass: Switchboard });
   container.register(PubkeyResolver.name, { useClass: PubkeyResolver });
-  container.register(TrafficMeter.name, { useClass: TrafficMeter });
 
   // Background Services
   container.registerSingleton(Gossip.name, Gossip);

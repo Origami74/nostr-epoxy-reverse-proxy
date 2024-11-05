@@ -2,11 +2,10 @@ import { inject, injectable } from "tsyringe";
 import { WebSocket, MessageEvent, ErrorEvent as CustomErrorEvent } from "ws";
 import { Proof } from "@cashu/cashu-ts";
 
-import { PRICE_UNIT, MINT_URL, PRICE_PER_KIB, UPSTREAM } from "../env.js";
+import { PRICE_UNIT, MINT_URL, PRICE_PER_MIN, UPSTREAM } from "../env.js";
 import OutboundNetwork, { type IOutboundNetwork } from "./outbound.js";
 import logger from "../logger.js";
 import { CashRegister, type ICashRegister } from "../pricing/cashRegister.js";
-import { TrafficMeter, type ITrafficMeter } from "./monitoring/trafficMeter.js";
 import PubkeyResolver, { type IPubkeyResolver } from "./pubkeyResolver.js";
 
 export interface ISwitchboard {
@@ -20,26 +19,24 @@ export default class Switchboard implements ISwitchboard {
   private network: IOutboundNetwork;
   private resolve: IPubkeyResolver;
 
-  private socketConnection = new Map<WebSocket, WebSocket>();
-  private socketCleanup = new Map<WebSocket, () => void>();
-  private trafficMeter: ITrafficMeter;
+  private sourceConnection: WebSocket | undefined;
+  private destConnection: WebSocket | undefined;
+  private socketCleanup: (() => void) | undefined;
 
   constructor(
     @inject(OutboundNetwork.name) network: IOutboundNetwork,
     @inject(CashRegister.name) cashRegister: ICashRegister,
-    @inject(TrafficMeter.name) trafficMonitor: ITrafficMeter,
     @inject(PubkeyResolver.name) resolve: IPubkeyResolver,
   ) {
     this.network = network;
     this.cashRegister = cashRegister;
-    this.trafficMeter = trafficMonitor;
     this.resolve = resolve;
   }
 
   // connect an incoming socket to the relay (optional)
   connectSocketToRelay(source: WebSocket, relay?: WebSocket) {
     // Disconnect any existing connections before binding new one
-    this.socketCleanup.get(source)?.();
+    this.socketCleanup?.();
 
     // deno-lint-ignore no-explicit-any
     let buffer: any[] = [];
@@ -71,8 +68,8 @@ export default class Switchboard implements ISwitchboard {
             const collectedAmount = await this.cashRegister.collectPayment(paymentProofs);
 
             // Set the traffic meter
-            const allowanceInKiB = collectedAmount / PRICE_PER_KIB;
-            this.trafficMeter.set(allowanceInKiB);
+            const minutes = collectedAmount / PRICE_PER_MIN;
+            setTimeout(this.closeConnection.bind(this), minutes * 60 * 1000);
 
             // create upstream socket
             const upstream = new WebSocket(targetUrl, { agent: this.network.agent });
@@ -86,7 +83,7 @@ export default class Switchboard implements ISwitchboard {
                 "PROXY",
                 "PAYMENT_REQUIRED",
                 {
-                  price: PRICE_PER_KIB,
+                  price: PRICE_PER_MIN,
                   mint: MINT_URL,
                   unit: PRICE_UNIT,
                 },
@@ -108,6 +105,7 @@ export default class Switchboard implements ISwitchboard {
         }
       }
     };
+
     const handleSourceClose = () => {
       if (relay && relay.readyState === WebSocket.OPEN) relay.close();
     };
@@ -146,14 +144,17 @@ export default class Switchboard implements ISwitchboard {
       relay.addEventListener("close", handleRelayClose);
       relay.addEventListener("error", handleRelayError);
 
-      this.socketConnection.set(source, relay);
+      this.sourceConnection = source;
+      this.destConnection = relay;
+
       relayCleanup = () => {
         relay.removeEventListener("open", handleRelayConnected);
         relay.removeEventListener("message", handleRelayMessage);
         relay.removeEventListener("close", handleRelayClose);
         relay.removeEventListener("error", handleRelayError);
 
-        this.socketConnection.delete(source);
+        this.sourceConnection = undefined;
+        this.destConnection = undefined;
       };
     }
 
@@ -162,34 +163,31 @@ export default class Switchboard implements ISwitchboard {
     source.addEventListener("close", handleSourceClose);
 
     // Save forwards for later cleanup
-    this.socketCleanup.set(source, () => {
+    this.socketCleanup = () => {
       source.removeEventListener("message", handleSourceMessage);
       source.removeEventListener("close", handleSourceClose);
 
       relayCleanup?.();
       relay?.close();
-    });
+    }
+  }
+
+  private closeConnection() {
+    if (this.sourceConnection?.readyState !== WebSocket.OPEN) return;
+    this.log("Source went bankrupt, closing connection.");
+    this.sourceConnection.close(1000, "PROXY: Connection bankrupted");
+    this.socketCleanup?.();
   }
 
   // connects an incoming socket to a remote relay
   connectSocketToUpstream(source: WebSocket, remote: WebSocket) {
     // Disconnect any existing connections before binding new one
-    this.socketCleanup.get(source)?.();
+    this.socketCleanup?.();
 
     source.send(JSON.stringify(["PROXY", "CONNECTING"]));
 
     // Source listeners
     const handleSourceMessage = (event: MessageEvent) => {
-      const meterRunning = this.trafficMeter.measureUpstream(event.data);
-
-      if (!meterRunning) {
-        if (source.readyState !== WebSocket.OPEN) return;
-        this.log("Source went bankrupt, closing connection.");
-        source.close(1000, "PROXY, Connection bankrupted");
-        remote.close(); // TODO: Cleanup
-        return;
-      }
-
       // send data to remote
       if (remote.readyState === WebSocket.OPEN) {
         remote.send(event.data, { binary: typeof event.data != "string" });
@@ -202,18 +200,9 @@ export default class Switchboard implements ISwitchboard {
 
     // Remote listeners
     const handleRemoteMessage = (event: MessageEvent) => {
-      const meterRunning = this.trafficMeter.measureDownstream(event.data);
-
-      if (!meterRunning) {
-        if (source.readyState !== WebSocket.OPEN) return;
-        this.log("Source went bankrupt, closing connection.");
-        source.close(1000, "PROXY, Connection bankrupted");
-        remote.close(); // TODO: Cleanup
-        return;
-      }
-
       this.forwardEvent(source, event);
     };
+
     const handleRemoteConnected = () => {
       source.send(JSON.stringify(["PROXY", "CONNECTED"]));
     };
@@ -235,10 +224,11 @@ export default class Switchboard implements ISwitchboard {
     remote.addEventListener("error", handleRemoteError);
     remote.addEventListener("close", handleRemoteClose);
 
-    this.socketConnection.set(source, remote);
+    this.sourceConnection = source;
+    this.destConnection = remote;
 
     // set cleanup
-    this.socketCleanup.set(source, () => {
+    this.socketCleanup = () => {
       source.removeEventListener("message", handleSourceMessage);
       source.removeEventListener("close", handleSourceClose);
 
@@ -248,8 +238,9 @@ export default class Switchboard implements ISwitchboard {
       remote.removeEventListener("close", handleRemoteClose);
 
       remote.close();
-      this.socketConnection.delete(source);
-    });
+      this.sourceConnection = undefined;
+      this.destConnection = undefined;
+    };
   }
 
   private forwardEvent(downstream: WebSocket, event: MessageEvent) {

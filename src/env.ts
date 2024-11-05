@@ -10,7 +10,7 @@ function optionalEnv(name: string) {
   return process.env[name];
 }
 
-const PRICE_PER_KIB = parseFloat(requiredEnv("PRICE_PER_KIB"));
+const PRICE_PER_MIN = parseFloat(requiredEnv("PRICE_PER_MIN"));
 const PRICE_UNIT = optionalEnv("PRICE_UNIT") ?? "sat";
 const PRIVATE_KEY_HEX = requiredEnv("PRIVATE_KEY");
 const NOSTR_RELAYS = requiredEnv("NOSTR_RELAYS")?.split(",");
@@ -52,7 +52,7 @@ export {
   PROFIT_PAYOUT_THRESHOLD,
   I2P_PROXY,
   TOR_PROXY,
-  PRICE_PER_KIB,
+  PRICE_PER_MIN,
   PRICE_UNIT,
   SERVICE_ABOUT,
   SERVICE_NAME,
