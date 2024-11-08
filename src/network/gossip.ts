@@ -14,8 +14,9 @@ import {
   INBOUND_TOR,
   INBOUND_I2P,
   INBOUND_CLEARNET,
+  INBOUND_HYPER,
 } from "../env.js";
-import { PROXY_ADVERTIZEMENT_KIND, SELF_MONITOR_KIND } from "../const.js";
+import { PROXY_ADVERTIZEMENT_KIND, TRANSPORT_METHODS_ANNOUNCEMENT_KIND, SELF_MONITOR_KIND } from "../const.js";
 import { RelayProvider, type IRelayProvider } from "../relayProvider.js";
 
 function livenessTags(self: string, address: string, network: string) {
@@ -100,7 +101,7 @@ export default class Gossip {
     this.log("Published profile");
   }
 
-  async advertize() {
+  async advertise() {
     const content = JSON.stringify(this.getProfileJson());
     const tags: string[][] = [];
 
@@ -122,10 +123,29 @@ export default class Gossip {
     this.log("Published advertizement");
   }
 
+  async advertiseNip37() {
+    const tags: string[][] = [];
+
+    // advertise nip37
+    this.log("Advertise nip37");
+
+
+    // advertize inbound urls
+    if (INBOUND_CLEARNET) tags.push(["clearnet", INBOUND_CLEARNET]);
+    if (INBOUND_TOR) tags.push(["tor", INBOUND_TOR]);
+    if (INBOUND_I2P) tags.push(["i2p", INBOUND_I2P]);
+    if (INBOUND_HYPER) tags.push(["hyper", INBOUND_HYPER]);
+
+    await this.publisher.publish(TRANSPORT_METHODS_ANNOUNCEMENT_KIND, tags);
+
+    this.log("Published nip37");
+  }
+
   private async update() {
     if (!this.running) return;
     await this.gossip();
-    await this.advertize();
+    await this.advertise();
+    await this.advertiseNip37();
 
     setTimeout(this.update.bind(this), this.interval);
   }

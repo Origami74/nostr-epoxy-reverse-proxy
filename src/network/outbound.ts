@@ -5,6 +5,9 @@ import { injectable } from "tsyringe";
 import logger from "../logger.js";
 import { I2P_PROXY, TOR_PROXY } from "../env.js";
 
+
+type SupportedNetwork = "clearnet" | "tor" | "i2p" | "hyper";
+
 function buildPacURI() {
   const statements: string[] = [];
 
@@ -50,6 +53,7 @@ export interface IOutboundNetwork {
   clearnet: boolean;
   agent: ProxyAgent | PacProxyAgent<string>;
   filterAddresses(urls: string[]): string[];
+  getFirstPreferredAddress(networks: Map<string, string>, preferredNetworkOrder: SupportedNetwork[]): string | undefined;
 }
 
 @injectable()
@@ -82,5 +86,16 @@ export default class OutboundNetwork implements IOutboundNetwork {
       }
       return true;
     });
+  }
+
+  getFirstPreferredAddress(networks: Map<string, string>, preferredNetworkOrder: SupportedNetwork[]): string | undefined {
+    for (let index in preferredNetworkOrder) {
+      const address = networks.get(preferredNetworkOrder[index]);
+      if(address){
+        return address
+      }
+    }
+
+    return undefined
   }
 }

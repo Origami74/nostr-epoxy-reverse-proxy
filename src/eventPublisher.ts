@@ -8,7 +8,7 @@ import type { IRelayProvider } from "./relayProvider.js";
 import { PRIVATE_KEY } from "./env.js";
 
 export interface IEventPublisher {
-  publish(kind: number, tags: string[][], content: string): Promise<void>;
+  publish(kind: number, tags: string[][], content?: string): Promise<void>;
   publishDM(destPubKey: string, content: string): Promise<void>;
   getPubkey(): Promise<string>;
 }
@@ -34,11 +34,11 @@ export class EventPublisher implements IEventPublisher {
     return (this.pubkey = await this.signer.getPublicKey());
   }
 
-  public async publish(kind: number, tags: string[][], content: string): Promise<void> {
+  public async publish(kind: number, tags: string[][], content?: string): Promise<void> {
     const note = {
       kind: kind,
       pubkey: await this.getPubkey(),
-      content: content,
+      content: content ?? "",
       created_at: unixNow(),
       tags: tags,
     };

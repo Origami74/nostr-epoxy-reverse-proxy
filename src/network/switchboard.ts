@@ -54,11 +54,19 @@ export default class Switchboard implements ISwitchboard {
           // resolve pubkey
           if (targetUrl.match(/[0-9a-f]{64}/)) {
             const pubkey = targetUrl;
-            const addresses = await this.resolve.lookup(pubkey);
+            const networks = await this.resolve.lookup(pubkey);
 
-            // TODO: add fallback logic
-            targetUrl = this.network.filterAddresses(addresses)[0];
-            if (!targetUrl) throw new Error("Failed to find good address for pubkey");
+            if(!networks || networks.size === 0){
+              throw new Error("No addresses provided by pubkey");
+            }
+
+            const resolvedUrl =  this.network.getFirstPreferredAddress(networks, ["clearnet", "hyper", "tor", "i2p"]);
+
+            if(!resolvedUrl){
+              throw new Error("Could not resolve supported url for pubkey");
+            }
+
+            targetUrl = resolvedUrl;
           }
 
           const paymentProofs = message[2] as undefined | Proof[];

@@ -36,6 +36,7 @@ const TOR_PROXY = optionalEnv("TOR_PROXY");
 const INBOUND_CLEARNET = optionalEnv("INBOUND_CLEARNET");
 const INBOUND_TOR = optionalEnv("INBOUND_TOR");
 const INBOUND_I2P = optionalEnv("INBOUND_I2P");
+const INBOUND_HYPER = optionalEnv("INBOUND_HYPER");
 
 const PRIVATE_KEY = hexToBytes(PRIVATE_KEY_HEX);
 
@@ -60,4 +61,5 @@ export {
   INBOUND_CLEARNET,
   INBOUND_TOR,
   INBOUND_I2P,
+  INBOUND_HYPER,
 };
