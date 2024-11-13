@@ -9,7 +9,7 @@ WIP NIP-XX proposal: [NIP-XX](NIP-XX.md)
 ### For clients
 
 - Enhanced privacy for the end-user, prevent IP address exposure to relays.
-- Improved onion routing. If a Nostr onion is passed through a proxy, the person sending the onion cannot be identified.
+- Improved onion routing. If a Nostr onion is passed through a proxy, it gets harder to identify the person sending the onion.
 - Super powerful when combined with requests encrypted using the public key of the final destination relay.
 
 ### For relay operators
@@ -30,8 +30,6 @@ There is a short window in which the websocket between the customer and NERP is 
 # Roadmap
 
 - Support routing to npub of a relay
-- Support payment negotiaton for relaying functionality
-- Support other protocols like TOR and I2P
 
 # Example usage
 
