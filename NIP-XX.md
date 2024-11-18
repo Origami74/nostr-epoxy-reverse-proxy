@@ -1,35 +1,24 @@
-# NIP-XX
+NIP-AA
+======
 
-## Relay proxying (epoxy)
+Relay proxying (epoxy)
+-----------------------------------
 
 `draft` `optional`
 
 This NIP describes a method by which relays can proxy a websocket to another relay based on either pubkey or url.
 
-## Motivation
-A client may want to connect to a relay that is not directly accessible from the client's device or network. For example:
-
-- A client is connected to a restricted network that only allows connections to the same geographical region, but wants to connect to a relay outside of that region.
-- A client want to connect to a tor relay using a web-based nostr app, but cannot connect to the tor network in its web-browser.
-
 ## Client implementation
 
 ### Request definition
-- `["PROXY", "<proxy_url>", "<auth_response>"]`
-- `["PROXY", "<proxy_pubkey>", "<auth_response>"]`
+- `["PROXY", "<proxy_url>", "<min_delay_ms>", "<max_delay_ms>"]`
 
 The arguments are the `PROXY` keyword first and second can be:
 
 - `<proxy_url>` A relay address
-- `<proxy_pubkey>` A public key of proxy or relay in hex format
+- `<min_delay_ms>`/`<max_delay_ms>` A delay range for the proxy operator to hold your messages before forwarding.
 
 The third argument is an optional `<auth_response>` argument which can be
-
-- a `<cashu_token>` containing cashu token.
-- a `<challenge_response>` a kind `22242` challenge response event as defined in [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md).
-
-WARNING:
-If requests are not encrypted to a pubkey of the destination, the proxy server can send the traffic anywhere without the client being aware.
 
 ## Proxy/Relay implementation
 
@@ -76,32 +65,23 @@ tag `price` for price per Min, followed by `unit` for price unit.
 }
 ```
 
-### Authorization
+
+NIP-BB
+======
+
+Payment required
+-----------------------------------
+
+
+### Payment
 
 If the proxy implementation requires a payment or authentication it will respond to the `PROXY` request with one or both of the following options for authentication:
 
-- `["PROXY", "PAYMENT_REQUIRED", <pricing_info>]`
-- `["PROXY", "AUTH_REQUIRED", "<challenge_string>"]`
-
+- `["PAYMENT_REQUIRED", "<challenge_string>" <payment_request>]`
 
 `<challenge_string>` is a string that the client needs to add to a kind `22242` relay auth event and add to their `PROXY` request.
 
-`<pricing_info>` is an object in the following format:
-
-```json
-{
-  "price": "<price_per_min>",
-  "unit": "<price_unit>",
-  "mint": "<mint_url>",
-  "top_up": "<nut-18-payment-request>"
-}
-```
-
-- `<mint_url>` URL of the mint, this must be a mint of the same `<price_unit>`
-- `<price_per_min>` Price per Minute.
-- `<price_unit>` Accepted payment unit.
-- `<top_up>` is an `optional` re-usable [NUT-18](https://github.com/cashubtc/nuts/blob/main/18.md) payment request that a client can pay to top-up their minutes.
-
+`<payment_request>` is a [NUT-18](https://github.com/cashubtc/nuts/blob/main/18.md) Payment request:
 
 ### Resolving Pubkeys
 
@@ -112,3 +92,12 @@ Both Client and Proxy use kind `18909` announcements to resolve pubkeys to url's
 #### No more funds
 When the client goes over the agreed upon (data) limits the proxy can decide to disconnect the websocket.
 In this case the websocket connection is closed with code `1000`.
+
+
+
+
+## Motivation
+A client may want to connect to a relay that is not directly accessible from the client's device or network. For example:
+
+- A client is connected to a restricted network that only allows connections to the same geographical region, but wants to connect to a relay outside of that region.
+- A client want to connect to a tor relay using a web-based nostr app, but cannot connect to the tor network in its web-browser.
