@@ -77,7 +77,7 @@ Payment required
 
 If the proxy implementation requires a payment or authentication it will respond to the `PROXY` request with one or both of the following options for authentication:
 
-- `["PAYMENT_REQUIRED", "<challenge_string>" <payment_request>]`
+- `["AUTH", "<challenge_string>" <payment_request>]`
 
 `<challenge_string>` is a string that the client needs to add to a kind `22242` relay auth event and add to their `PROXY` request.
 
@@ -85,7 +85,7 @@ If the proxy implementation requires a payment or authentication it will respond
 
 ### Resolving Pubkeys
 
-Both Client and Proxy use kind `18909` announcements to resolve pubkeys to url's.
+Both Client and Proxy use [NIP-37](https://github.com/nostr-protocol/nips/pull/1585), kind `11111` announcements to resolve pubkeys to url's.
 
 ### Error handling
 
