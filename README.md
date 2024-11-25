@@ -46,7 +46,19 @@ This flow describes the process of a customer connecting to a relay through a pr
 
 Find an overview of currently active proxies at [swissdash.site](https://swissdash.site)
 
-- kind `10377` proxy announcement
+Proxies must advertise their inbound addresses using a [NIP-37](https://github.com/ArjenStens/nips/blob/transport-method-announcement/37.md) kind `11111` transport method announcement:
+```json
+{
+  "kind": 11111,
+  "tags": [
+    ["clearnet", "proxy.domain.com", "wss"],
+    ["clearnet", "157.240.212.35", "ws"],
+    ["tor", "somehash.onion", "ws"]
+  ]
+}
+```
+
+Proxies can publicly advertise their services by sending a `10377` proxy announcement once every minute, which also acts as a heartbeat to show that it's active.
 ```json
 {
   "kind": 10377,
@@ -55,14 +67,16 @@ Find an overview of currently active proxies at [swissdash.site](https://swissda
     ["mint", "https://some.mint.com", "sat"],
     ["network-outbound", "clearnet"],
     ["network-outbound", "tor"],
-    ["url", "wss://proxy.domain.com", "clearnet"]
-  ],
-  ...
+    ["address", "wss://proxy.domain.com", "clearnet"]
+  ]
 }
 ```
 
-- kind `11111` transport method announcement
-
+The message contains the following tags:
+- `price` where the second index indicates the price per minute followed by the unit.
+- `mint` where the second index indicates the mint's address, followed by the unit
+- `network-outbound` to indicate which networks this proxy can reach. (In this example it can proxy to a tor relay), can occur multiple times
+- `address` to indicate where this proxy accepts inbound connections. Should contain the same information as the kind `11111` event. This acts as a hint so that a client doesn't HAVE to do an explicit lookup of the `11111` event. (which might compromise privacy)
 
 # Implementation (this repo) - Nostr Epoxy Reverse Proxy
 
