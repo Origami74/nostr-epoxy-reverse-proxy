@@ -66,34 +66,9 @@ tag `price` for price per Min, followed by `unit` for price unit.
 ```
 
 
-NIP-BB
-======
-
-Payment required
------------------------------------
-
-
-### Payment
-
-If the proxy implementation requires a payment or authentication it will respond to the `PROXY` request with one or both of the following options for authentication:
-
-- `["AUTH", "<challenge_string>" <payment_request>]`
-
-`<challenge_string>` is a string that the client needs to add to a kind `22242` relay auth event and add to their `PROXY` request.
-
-`<payment_request>` is a [NUT-18](https://github.com/cashubtc/nuts/blob/main/18.md) Payment request:
-
-### Resolving Pubkeys
-
-Both Client and Proxy use [NIP-37](https://github.com/nostr-protocol/nips/pull/1585), kind `11111` announcements to resolve pubkeys to url's.
-
-### Error handling
-
 #### No more funds
 When the client goes over the agreed upon (data) limits the proxy can decide to disconnect the websocket.
 In this case the websocket connection is closed with code `1000`.
-
-
 
 
 ## Motivation

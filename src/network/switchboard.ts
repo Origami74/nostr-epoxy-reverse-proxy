@@ -133,6 +133,7 @@ export default class Switchboard implements ISwitchboard {
           }
 
           // create upstream socket
+          console.log("Connecting to upstream")
           const upstream = new WebSocket(targetUrl, { agent: this.network.agent });
           upstream.binaryType = "arraybuffer"; // Needed to prevent having to convert Node Buffers to ArrayBuffers
 
@@ -165,6 +166,7 @@ export default class Switchboard implements ISwitchboard {
     let relayCleanup: (() => void) | undefined = undefined;
     if (relay) {
       const handleRelayMessage = (event: MessageEvent) => {
+        console.log(`relay msg: ${event.data}`)
         this.forwardEvent(source, event);
       };
 

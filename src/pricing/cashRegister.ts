@@ -80,7 +80,7 @@ export class CashRegister implements ICashRegister {
 
   public async payoutOwner(ignoreThreshold: boolean = false) {
     const balance = this.wallet.getBalance();
-    if (!ignoreThreshold && balance < this.profitsPayoutThreshold) {
+    if (!ignoreThreshold && balance <= this.profitsPayoutThreshold) {
       this.log(
         `Balance of ${balance} not enough for payout threshold of ${this.profitsPayoutThreshold}, skipping payout...`,
       );
