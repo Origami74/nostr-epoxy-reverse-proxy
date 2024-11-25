@@ -1,21 +1,74 @@
-# NERP - Nostr Epoxy Reverse Proxy
+# Nostr Epoxy - Monetizable websocket proxies
+
+## Project goals
+Nostr Epoxy is a nostr-based, paid websocket proxy. It allows users to access relays and other websockets (for example cashu mints) that they would otherwise not be able to access. These can for example be relays on the tor/i2p or hyper networks, or it can be used to get around clearnet blockades. It incentivizes proxy operators to keep their infrastucture running by including in-band cashu payments.
+
+Epoxy can act as a glue between different networks making it seem (from the user's perspective) as being one single network. Part of this project is adding and incentivizing the use of pubkeys to address services like this, as that can simultaniously be used to eliminate relicance on DNS and SSL for secure communications.
+
+
+### Why implement this in clients?
+
+- Work around internet blockades
+- Reach tor/i2p/hyper addresses without the need for running specialized software locally. (Connect to tor relays on iPhone clients)
+- Enhanced privacy for the end-user, prevent IP address exposure to relays.
+
+### Why run a proxy?
+
+- Stack sats, get compensated for the upkeep of infrastructure, which also acts as a spam-filter.
+- Support user privacy.
+- Help blur the lines between different networks
+
+## Roadmap
+- [x] Proxy announcements on Nostr
+- [ ] Payments
+  - [x] Require payment before proxying
+  - [x] Use NIP-42 style messages to authorize by payment
+  - [ ] NIP-42 extend with auth-by-payment proposal
+- [ ] Privacy improvements
+  - [ ] Add random delays (within a range) to mitigate timing-attacks.
+- [ ] Pubkey addressing
+  - [ ] Automated resolution of pubkey to address (domain/ip)
+    - [x] Server side
+    - [ ] Client side
+  - [ ] [NIP-37 proposal](https://github.com/nostr-protocol/nips/pull/1585)
+- [ ] Pubkey encryption (remove reliance on DNS + SSL)
+  - [ ] Encrypt messages to pubkey of proxy (each hop)
+  - [ ] Encrypt messages to pubkey of relay (destination)
+  - [ ] Standardize handshake for switching to encryption (NIP-??)
+
+## Proxy Flow
+
+This flow describes the process of a customer connecting to a relay through a proxy. The example contains one proxy (one hop), but there is nothing restricting a customer from connecting through multiple of these proxies (multi-hop).
+
+![](https://www.plantuml.com/plantuml/png/dLBBJiCm4BpxA_O3Gjfp3gXHwWD8926KHq_8n2irIXmNFw3vUn85OaJtGeyxE-ETiMPZdJ3Eguw9sca3cRTEApHicfiFuN210b8QVHfIzhE0g-jl218eZjZ3CxvPNRVes8nFZ8MTW6vfRLaLB_i8FgrDLYk3dHXYAPItSQFfXyfqVyVptMl5xnzlAhwDe1I3mjv1XUyUhVltdGXgOGy-nU5s7STno5nDjE1Ydi_ppl3lOxeDge0-e0FNA3H4iE0mA_ASPpk-POnECWQ7jkabh0bhOKdOua_Znn77bzL56Y9fwKrz41O1JyV6eAJrMQSjKhsPqn0CYN_xAF6yinlivTZkBm00)
+
+## Discovery
+
+Find an overview of currently active proxies at [swissdash.site](https://swissdash.site)
+
+- kind `10377` proxy announcement
+```json
+{
+  "kind": 10377,
+  "tags": [
+    ["price", "3", "sat"],
+    ["mint", "https://some.mint.com", "sat"],
+    ["network-outbound", "clearnet"],
+    ["network-outbound", "tor"],
+    ["url", "wss://proxy.domain.com", "clearnet"]
+  ],
+  ...
+}
+```
+
+- kind `11111` transport method announcement
+
+
+# Implementation (this repo) - Nostr Epoxy Reverse Proxy
 
 Are operating a relay NERP yet? Use this **Nostr Epoxy Reverse Proxy** to allow clients to proxy through your relay and earn sats.
 
 WIP NIP-XX proposal: [NIP-XX](NIP-XX.md)
-
-## Why use this?
-
-### For clients
-
-- Enhanced privacy for the end-user, prevent IP address exposure to relays.
-- Improved onion routing. If a Nostr onion is passed through a proxy, it gets harder to identify the person sending the onion.
-- Super powerful when combined with requests encrypted using the public key of the final destination relay.
-
-### For relay operators
-
-- Stack sats
-- Support user privacy
 
 # How it works
 
@@ -27,9 +80,7 @@ WIP NIP-XX proposal: [NIP-XX](NIP-XX.md)
 
 There is a short window in which the websocket between the customer and NERP is open, but the forwarded connection is not open yet. To resolve this, NERP buffers requests until tunnel is created and then replays these requests to the destination.
 
-# Roadmap
 
-- Support routing to npub of a relay
 
 # Example usage
 
