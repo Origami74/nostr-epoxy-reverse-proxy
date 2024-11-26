@@ -9,7 +9,7 @@ import { CashRegister, type ICashRegister } from "../pricing/cashRegister.js";
 import PubkeyResolver, { type IPubkeyResolver } from "./pubkeyResolver.js";
 import {
   NostrEvent
-} from "../../../../../../Library/Caches/deno/deps/https/jsr.io/17a097467dc752fd5fae669a2e2cd1542e5839d73f71102cd16bcf872d673a25";
+} from "@nostrify/nostrify";
 
 export interface ISwitchboard {
   handleConnection(source: WebSocket): void;
@@ -77,7 +77,7 @@ export default class Switchboard implements ISwitchboard {
       console.log(`source msg: ${event.data}`)
       if (typeof event.data === "string" && event.data.startsWith('["AUTH')) {
         try {
-          const message = JSON.parse(event.data) as [string, string] | [string, string, Proof[]];
+          const message = JSON.parse(event.data) as [string, NostrEvent] | [string, NostrEvent, Proof[]];
           if (!Array.isArray(message) || message[0] !== "AUTH") throw new Error("Broken auth message");
 
           let clientAuthEvent: NostrEvent = message[1];
