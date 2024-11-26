@@ -67,6 +67,7 @@ Proxies can publicly advertise their services by sending a `10377` proxy announc
     ["mint", "https://some.mint.com", "sat"],
     ["network-outbound", "clearnet"],
     ["network-outbound", "tor"],
+    ["n", "clearnet"],
     ["url", "wss://proxy.domain.com", "clearnet"]
   ]
 }
@@ -75,6 +76,7 @@ Proxies can publicly advertise their services by sending a `10377` proxy announc
 The message contains the following tags:
 - `price` where the second index indicates the price per minute followed by the unit.
 - `mint` where the second index indicates the mint's address, followed by the unit
+- `n` to indicate on networks this proxy accepts inbound connections
 - `network-outbound` to indicate which networks this proxy can reach. (In this example it can proxy to a tor relay), can occur multiple times
 - `url` to indicate where this proxy accepts inbound connections. Should contain the same information as the kind `11111` event. This acts as a hint so that a client doesn't HAVE to do an explicit lookup of the `11111` event. (which might compromise privacy)
 
