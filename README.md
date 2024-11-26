@@ -5,6 +5,7 @@ Nostr Epoxy is a nostr-based, paid websocket proxy. It allows users to access re
 
 Epoxy can act as a glue between different networks making it seem (from the user's perspective) as being one single network. Part of this project is adding and incentivizing the use of pubkeys to address services like this, as that can simultaniously be used to eliminate relicance on DNS and SSL for secure communications.
 
+You can find the NIP-XX proposal [here.](NIP-XX.md)
 
 ### Why implement this in clients?
 
@@ -23,7 +24,7 @@ Epoxy can act as a glue between different networks making it seem (from the user
 - [ ] Payments
   - [x] Require payment before proxying
   - [x] Use NIP-42 style messages to authorize by payment
-  - [ ] NIP-42 extend with auth-by-payment proposal
+  - [ ] [NIP-42](https://github.com/nostr-protocol/nips/pull/1609) extend with auth-by-payment proposal
 - [ ] Privacy improvements
   - [ ] Add random delays (within a range) to mitigate timing-attacks.
 - [ ] Pubkey addressing
@@ -80,13 +81,17 @@ The message contains the following tags:
 - `network-outbound` to indicate which networks this proxy can reach. (In this example it can proxy to a tor relay), can occur multiple times
 - `url` to indicate where this proxy accepts inbound connections. Should contain the same information as the kind `11111` event. This acts as a hint so that a client doesn't HAVE to do an explicit lookup of the `11111` event. (which might compromise privacy)
 
-# Implementation (this repo) - Nostr Epoxy Reverse Proxy
+---
 
-Are operating a relay NERP yet? Use this **Nostr Epoxy Reverse Proxy** to allow clients to proxy through your relay and earn sats.
+----
 
-WIP NIP-XX proposal: [NIP-XX](NIP-XX.md)
+--- 
+# Implementation - Nostr Epoxy Reverse Proxy
 
-# How it works
+This implementation is a reverse-proxy that by default forwards all traffic to a predefined relay (set by the operator).
+Only when a user sends a `PROXY` request will the proxy kick in and open a connection with the targeted websocket. When the user is authorized (using payment) it will step away from the connection and only close the connection once the purchased time has run out.
+
+## How it works
 
 - Relay operator sets DNS to route traffic to this reverse proxy
 - Relay operator configures which relay this reverse proxy should forward to by default (their own relay instance)
@@ -96,9 +101,7 @@ WIP NIP-XX proposal: [NIP-XX](NIP-XX.md)
 
 There is a short window in which the websocket between the customer and NERP is open, but the forwarded connection is not open yet. To resolve this, NERP buffers requests until tunnel is created and then replays these requests to the destination.
 
-
-
-# Example usage
+## Example usage
 
 ```javascript
 const entryRelay = "ws://localhost:8000";

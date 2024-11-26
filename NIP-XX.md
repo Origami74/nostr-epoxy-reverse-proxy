@@ -1,7 +1,7 @@
-NIP-AA
+NIP-301
 ======
 
-Relay proxying (epoxy)
+Websocket Proxies (Epoxy)
 -----------------------------------
 
 `draft` `optional`
@@ -65,14 +65,6 @@ tag `price` for price per Min, followed by `unit` for price unit.
 }
 ```
 
-
 #### No more funds
 When the client goes over the agreed upon (data) limits the proxy can decide to disconnect the websocket.
 In this case the websocket connection is closed with code `1000`.
-
-
-## Motivation
-A client may want to connect to a relay that is not directly accessible from the client's device or network. For example:
-
-- A client is connected to a restricted network that only allows connections to the same geographical region, but wants to connect to a relay outside of that region.
-- A client want to connect to a tor relay using a web-based nostr app, but cannot connect to the tor network in its web-browser.
