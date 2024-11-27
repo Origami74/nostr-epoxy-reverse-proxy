@@ -119,3 +119,26 @@ From the repository root directory, run:
 ```bash
 docker build --tag nostr-epoxy-reverse-proxy .
 ```
+
+## Docker Compose
+Example with TOR proxy for outbound connections. Refer to the `.env.example` file to populate your `.env` file.
+
+```yaml
+services:
+  nostr-nerp:
+    container_name: "nostr-nerp"
+    image: 'ghcr.io/arjenstens/nostr-epoxy-reverse-proxy'
+    restart: always
+    env_file:
+      - your_env_file_here.env
+  nostr-nerp-tor:
+    container_name: "nostr-nerp-tor"
+    image: 'dockage/tor-privoxy'
+    restart: always
+    volumes:
+      - tor-config:/etc/tor
+      - tor-data:/var/lib/tor
+volumes:
+  tor-config:
+  tor-data:
+```
