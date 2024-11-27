@@ -101,34 +101,21 @@ Only when a user sends a `PROXY` request will the proxy kick in and open a conne
 
 There is a short window in which the websocket between the customer and NERP is open, but the forwarded connection is not open yet. To resolve this, NERP buffers requests until tunnel is created and then replays these requests to the destination.
 
-## Example usage
+## Build & Run
 
-```javascript
-const entryRelay = "ws://localhost:8000";
-const proxyRelay = "wss://nos.lol";
+Required NodeJS version `22`
 
-const ws = new WebSocket(entryRelay);
+### Run Local
+```bash
+pnpm install
 
-ws.onopen = () => {
-  ws.send(JSON.stringify(["PROXY", proxyRelay]));
-};
+pnpm run dev
 
-ws.onmessage = (message) => {
-  const parsed = JSON.parse(message.data);
+# Available on http://localhost:8000
+```
 
-  // Send request once we're connected to the proxy
-  if (parsed[0] === "PROXY" && parsed[1] === "CONNECTED") {
-    ws.send(
-      JSON.stringify([
-        "REQ",
-        "sub-id1",
-        {
-          kinds: [1],
-          authors: ["eaa24899024757f1457c3537ab08ffe255f97f0c520f1c7c3500e22b58b41b3a"],
-        },
-      ]),
-    );
-  }
-  console.log(message.data);
-};
+### Build Docker container
+From the repository root directory, run:
+```bash
+docker build --tag nostr-epoxy-reverse-proxy .
 ```
