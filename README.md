@@ -106,6 +106,7 @@ There is a short window in which the websocket between the customer and NERP is 
 
 Required NodeJS version `22`
 
+
 ### Run Local
 ```bash
 pnpm install
