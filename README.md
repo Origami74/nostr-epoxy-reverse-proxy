@@ -1,26 +1,27 @@
 # Nostr Epoxy - Monetizable websocket proxies
-
+![epoxy-hops.png](epoxy-hops.png)
 ## Project goals
-Nostr Epoxy is a nostr-based, paid websocket proxy. It allows users to access relays and other websockets (for example cashu mints) that they would otherwise not be able to access. These can for example be relays on the tor/i2p or hyper networks, or it can be used to get around clearnet blockades. It incentivizes proxy operators to keep their infrastucture running by including in-band cashu payments.
+Nostr Epoxy is a nostr-based, paid websocket proxy. It allows users to access relays and other websockets (for example cashu mints) that they would otherwise not be able to access. These can for example be relays on the tor/i2p or hyper networks, or it can be used to get around clearnet blockades. It incentivizes proxy operators to keep their infrastucture running by including in-band cashu payments #1.
 
-Epoxy can act as a glue between different networks making it seem (from the user's perspective) as being one single network. Part of this project is adding and incentivizing the use of pubkeys to address services like this, as that can simultaniously be used to eliminate relicance on DNS and SSL for secure communications.
+Epoxy can act as a glue or translator between different networks making it seem (from the user's perspective) as being one single network. Part of this project is introducing the use of pubkeys (#2) to address services like epoxy, enabling secure communication through encryption. Addressing with pubkeys removes the use of network-specific addresses, increasing compatibitlity between networks. Pubkey addressing can simultaniously be used to eliminate reliance on DNS and SSL for secure communications.
 
+The initial server-side implementation is a reverse proxy, because it's easy for relay operators to add this in front of or next to their existing relays. It allows them to experiment without impacting the majority of their trafic.
 You can find the NIP-XX proposal [here.](NIP-XX.md)
 
 ### Why implement this in clients?
 
 - Work around internet blockades
 - Reach tor/i2p/hyper addresses without the need for running specialized software locally. (Connect to tor relays on iPhone clients)
-- Enhanced privacy for the end-user, prevent IP address exposure to relays.
+- Prevent IP address exposure to destination relays, enhancing privacy.
 
 ### Why run a proxy?
 
 - Stack sats, get compensated for the upkeep of infrastructure, which also acts as a spam-filter.
 - Support user privacy.
-- Help blur the lines between different networks
+- Help internet traffic cross network boundaries
 
 ## Roadmap
-- [x] Proxy announcements on Nostr
+- [x] Announce proxy availability over Nostr
 - [ ] Payments
   - [x] Require payment before proxying
   - [x] Use NIP-42 style messages to authorize by payment
