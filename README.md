@@ -48,7 +48,7 @@ This flow describes the process of a customer connecting to a relay through a pr
 
 Find an overview of currently active proxies at [swissdash.site](https://swissdash.site)
 
-Proxies must advertise their inbound addresses using a [NIP-37](https://github.com/ArjenStens/nips/blob/transport-method-announcement/37.md) kind `11111` transport method announcement:
+Proxies must advertise their inbound addresses using a [NIP-37](https://github.com/nostr-protocol/nips/pull/1585) kind `11111` transport method announcement:
 ```json
 {
   "kind": 11111,
@@ -129,7 +129,7 @@ Example with TOR proxy for outbound connections. Refer to the `.env.example` fil
 services:
   nostr-nerp:
     container_name: "nostr-nerp"
-    image: 'ghcr.io/arjenstens/nostr-epoxy-reverse-proxy'
+    image: 'ghcr.io/origami74/nostr-epoxy-reverse-proxy'
     restart: always
     env_file:
       - your_env_file_here.env

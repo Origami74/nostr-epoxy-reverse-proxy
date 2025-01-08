@@ -8,5 +8,4 @@ relays:
   - wss://nostr.wine/
   - wss://relay.nostrplebs.com/
   - wss://relay.fountain.fm/
-  - wss://relay.stens.dev/
   - wss://relay.primal.net/
